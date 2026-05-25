@@ -468,10 +468,7 @@
   <div class="header-divider"></div>
   <span class="brand-sub">Job Calendar</span>
   <div class="hspacer"></div>
-  <div id="gcal-sync-status" title="Double-click to force sync" ondblclick="syncGoogleCalendar()" style="font-size:11px;font-weight:600;color:#2176AE;display:flex;align-items:center;gap:5px;cursor:pointer;">
-    <span id="gcal-sync-dot" style="width:8px;height:8px;border-radius:50%;background:#C8DCF0;display:inline-block;flex-shrink:0;"></span>
-    <span id="gcal-sync-label">Connecting...</span>
-  </div>
+  <div id="gcal-sync-status" title="Double-click to force sync" ondblclick="syncGoogleCalendar()" style="font-size:11px;font-weight:600;color:#2176AE;display:flex;align-items:center;gap:5px;cursor:pointer;"><span id="gcal-sync-dot" style="width:8px;height:8px;border-radius:50%;background:#C8DCF0;display:inline-block;flex-shrink:0;"></span><span id="gcal-sync-label">Connecting...</span></div>
   <div id="email-indicator"><span class="spin">&#8635;</span> Sending email&hellip;</div>
   <button class="nav-btn" id="btn-prev" title="Previous">&#8249;</button>
   <button class="today-btn" id="btn-today">Today</button>
@@ -2605,22 +2602,22 @@ function updateReviewProgress() {
 }
 
 function sendSingleEmail(idx) {
-  var email   = reviewEmails[idx];
+  var email = reviewEmails[idx];
   if (email.status === 'sent') return;
   var subject  = document.getElementById('review-subject-' + idx).value.trim();
-  var bodyText = document.getElementById('review-body-'    + idx).value.trim();
+  var bodyText = document.getElementById('review-body-' + idx).value.trim();
   var statusEl = document.getElementById('review-status-' + idx);
-  var sendBtn  = document.getElementById('btn-send-'      + idx);
-  sendBtn.disabled     = true;
-  statusEl.className   = 'review-status sending';
+  var sendBtn  = document.getElementById('btn-send-' + idx);
+  sendBtn.disabled = true;
+  statusEl.className = 'review-status sending';
   statusEl.textContent = 'Opening...';
   sendViaOutlook({ to: email.contractor.email, subject: subject, body: bodyText });
   reviewEmails[idx].status = 'sent';
-  statusEl.className   = 'review-status sent';
+  statusEl.className = 'review-status sent';
   statusEl.textContent = 'Opened in Outlook';
-  sendBtn.className    = 'btn-send-this sent';
-  sendBtn.textContent  = 'Sent';
-  sendBtn.disabled     = true;
+  sendBtn.className = 'btn-send-this sent';
+  sendBtn.textContent = 'Sent';
+  sendBtn.disabled = true;
   updateReviewProgress();
 }
 
@@ -2994,10 +2991,9 @@ document.querySelectorAll(".view-btn").forEach(b => {
 });
 render();
 
-
-// ─── GOOGLE CALENDAR SYNC ────────────────────────────────────────────────────
-var GCAL_SCRIPT_URL =  + SYNC_URL + ;
-var GCAL_SYNC_INTERVAL = 30 * 60 * 1000; // 30 minutes
+// ─── GOOGLE CALENDAR SYNC ─────────────────────────────────────
+var GCAL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx2jPexbzpgJItSUCltu8x9oVJVHYkc23UhOYfTbAhDqF7BT2vYP9FsZ8kwGH8hReF6/exec';
+var GCAL_SYNC_INTERVAL = 30 * 60 * 1000;
 
 function setSyncStatus(status, message) {
   var dot   = document.getElementById('gcal-sync-dot');
@@ -3005,7 +3001,7 @@ function setSyncStatus(status, message) {
   if (!dot || !label) return;
   var colours = { connecting: '#C8DCF0', syncing: '#F0A500', ok: '#2E8B57', error: '#C0392B' };
   dot.style.background = colours[status] || colours.connecting;
-  label.textContent    = message;
+  label.textContent = message;
 }
 
 function applyGcalEvents(data) {
@@ -3025,15 +3021,13 @@ function applyGcalEvents(data) {
 
 function syncGoogleCalendar() {
   setSyncStatus('syncing', 'Syncing...');
-
   var cbName = 'gcalCB_' + Date.now();
-  var script  = document.createElement('script');
-  var timer   = setTimeout(function() {
+  var script = document.createElement('script');
+  var timer = setTimeout(function() {
     setSyncStatus('error', 'Sync timed out');
     delete window[cbName];
     if (script.parentNode) script.parentNode.removeChild(script);
   }, 20000);
-
   window[cbName] = function(data) {
     clearTimeout(timer);
     delete window[cbName];
@@ -3041,21 +3035,17 @@ function syncGoogleCalendar() {
     try { applyGcalEvents(data); }
     catch(e) { setSyncStatus('error', 'Sync error'); console.error(e); }
   };
-
   script.onerror = function() {
     clearTimeout(timer);
     setSyncStatus('error', 'Sync failed');
     delete window[cbName];
   };
-
   script.src = GCAL_SCRIPT_URL + '?action=getEvents&callback=' + cbName;
   document.head.appendChild(script);
 }
 
-// Start sync on load
 syncGoogleCalendar();
 setInterval(syncGoogleCalendar, GCAL_SYNC_INTERVAL);
-
 
 </script>
 </body>
