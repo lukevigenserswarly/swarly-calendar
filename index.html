@@ -70,17 +70,18 @@
   #subheader-top { display: flex; align-items: center; justify-content: space-between; padding-bottom: 5px; }
   #month-label { color: #1A4F7A; font-weight: 800; font-size: 13px; letter-spacing: 0.02em; }
   #gcal-status { font-size: 11px; color: #2176AE; font-weight: 600; }
-  #cal-wrap { display: flex; align-items: stretch; overflow: hidden; flex: 1; }
+  #cal-wrap { display: flex; align-items: flex-start; overflow: hidden; flex: 1; min-height: 0; }
   #label-panel {
     flex-shrink: 0; width: 158px; min-width: 158px;
     position: sticky; left: 0; z-index: 120; background: #fff;
     border-right: 2px solid #D0D7E3;
+    align-self: flex-start;
   }
+  #grid-scroll { flex: 1; overflow-x: auto; overflow-y: visible; min-width: 0; }
   #label-header {
     background: #EEF2F8; border-bottom: 2px solid #C8D3E3;
   }
   #label-rows { display: flex; flex-direction: column; }
-  #grid-scroll { flex: 1; overflow-x: auto; overflow-y: visible; }
   #cal-inner { display: inline-block; min-width: 100%; }
   #day-header-row {
     display: flex; background: #EEF2F8; border-bottom: 2px solid #C8D3E3;
