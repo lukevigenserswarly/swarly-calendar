@@ -2595,18 +2595,30 @@ function renderReviewCards() {
       "</div></div>";
     (function(idx) {
       var btn = card.querySelector(".btn-send-this");
-      btn.target = '_blank';
-      btn.rel    = 'noopener';
-      // href gets set by updateMailtoLinks() after render
-      btn.addEventListener("click", function() {
+      btn.addEventListener("click", function(e) {
+        e.preventDefault();
         if (reviewEmails[idx].status === 'sent') return;
-        reviewEmails[idx].status = 'sent';
-        var statusEl = document.getElementById('review-status-' + idx);
-        if (statusEl) { statusEl.className = 'review-status sent'; statusEl.textContent = 'Sent ✓'; }
-        btn.className   = 'btn-send-this sent';
-        btn.textContent = 'Sent ✓';
-        btn.removeAttribute('href');
-        updateReviewProgress();
+        var email    = reviewEmails[idx];
+        var subjectEl = document.getElementById('review-subject-' + idx);
+        var bodyEl    = document.getElementById('review-body-' + idx);
+        var subject  = subjectEl ? subjectEl.value.trim() : '';
+        var bodyText = bodyEl    ? bodyEl.value.trim()    : '';
+        var s        = loadSettings();
+        var params   = [];
+        if (s && s.email) params.push('cc=' + encodeURIComponent(s.email));
+        params.push('subject=' + encodeURIComponent(subject));
+        params.push('body='    + encodeURIComponent(bodyText));
+        var mailtoUrl = 'mailto:' + encodeURIComponent(email.contractor.email) + '?' + params.join('&');
+        window.location.href = mailtoUrl;
+        // Mark as sent after short delay
+        setTimeout(function() {
+          reviewEmails[idx].status = 'sent';
+          var statusEl = document.getElementById('review-status-' + idx);
+          if (statusEl) { statusEl.className = 'review-status sent'; statusEl.textContent = 'Opened in Outlook ✓'; }
+          btn.className   = 'btn-send-this sent';
+          btn.textContent = 'Sent ✓';
+          updateReviewProgress();
+        }, 500);
       });
     })(i);
     body.appendChild(card);
