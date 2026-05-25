@@ -922,6 +922,14 @@ function saveJobs() {
   localStorage.setItem("swarly_jobs_v2", JSON.stringify(jobs));
 }
 
+const SETTINGS_KEY = "swarly_settings_v1";
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch { return {}; }
+}
+function saveSettings(data) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
+}
+
 // ─── DATE HELPERS ────────────────────────────────────────────────────────────
 function weekStart(d) {
   const r = new Date(d);
