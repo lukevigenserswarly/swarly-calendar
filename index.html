@@ -2161,15 +2161,32 @@ function renderConfirmationSection(job, savedOrder) {
       const orders = loadOrders();
       const ord = orders[job.id];
       if (!ord) return;
-      // Remove the contractor booking for this key
+
       const keyParts = item.key.split("_");
       const type = keyParts[0];
-      if (type === "trucks" && ord.trucks) {
-        const idx = parseInt(keyParts[1]);
-        if (ord.trucks[idx]) ord.trucks[idx] = null;
-      } else if (ord[type]) {
-        ord[type] = null;
+
+      if (type === "trucks" && ord.trucks && ord.trucks.rows) {
+        // Remove all truck rows for this contractor index
+        const contractorIdx = parseInt(keyParts[1]);
+        ord.trucks.rows = ord.trucks.rows.filter(function(r) {
+          return r.contractorIdx !== contractorIdx;
+        });
+        // If no rows left disable trucks entirely
+        if (ord.trucks.rows.length === 0) ord.trucks.enabled = false;
+      } else if (type === "profiler" && ord.profiler) {
+        ord.profiler.enabled = false;
+        ord.profiler.contractorIdx = null;
+      } else if (type === "tc" && ord.tc) {
+        ord.tc.enabled = false;
+        ord.tc.contractorIdx = null;
+      } else if (type === "core" && ord.core) {
+        ord.core.enabled = false;
+        ord.core.contractorIdx = null;
+      } else if (type === "asphalt" && ord.asphalt) {
+        ord.asphalt.enabled = false;
+        ord.asphalt.contractorIdx = null;
       }
+
       // Clear confirmation
       if (ord.confirmations) delete ord.confirmations[item.key];
       saveOrders(orders);
