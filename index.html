@@ -2553,6 +2553,8 @@ function openReviewModal(emails) {
   renderReviewCards();
   updateReviewProgress();
   document.getElementById("review-overlay").classList.add("open");
+  // Update all mailto hrefs after cards have rendered
+  setTimeout(updateMailtoLinks, 150);
 }
 
 function closeReviewModal() {
@@ -2585,33 +2587,33 @@ function renderReviewCards() {
       "</div></div>";
     (function(idx) {
       var btn = card.querySelector(".btn-send-this");
-      btn.addEventListener("click", function(e) {
-        e.preventDefault();
-        var email   = reviewEmails[idx];
-        if (email.status === 'sent') return;
-        var subject  = document.getElementById('review-subject-' + idx).value.trim();
-        var bodyText = document.getElementById('review-body-' + idx).value.trim();
-        var s = loadSettings();
-        var params = [];
-        if (s && s.email) params.push('cc=' + encodeURIComponent(s.email));
-        params.push('subject=' + encodeURIComponent(subject));
-        params.push('body=' + encodeURIComponent(bodyText));
-        var mailtoUrl = 'mailto:' + encodeURIComponent(email.contractor.email) + '?' + params.join('&');
-        btn.href = mailtoUrl;
-        btn.target = '_blank';
-        // Re-trigger as a real link click
-        var a = document.createElement('a');
-        a.href = mailtoUrl;
-        a.target = '_blank';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        // Mark as sent
+      // Build the mailto URL now and set it directly on the anchor
+      // so the user clicking it is a real native link click — no JS in between
+      var email    = reviewEmails[idx];
+      var subject  = document.getElementById('review-subject-' + idx) 
+                     ? document.getElementById('review-subject-' + idx).value.trim()
+                     : (email.subject || '');
+      var bodyText = document.getElementById('review-body-' + idx)
+                     ? document.getElementById('review-body-' + idx).value.trim()
+                     : (email.body || '');
+      var s = loadSettings();
+      var params = [];
+      if (s && s.email) params.push('cc=' + encodeURIComponent(s.email));
+      params.push('subject=' + encodeURIComponent(subject));
+      params.push('body=' + encodeURIComponent(bodyText));
+      var mailtoUrl = 'mailto:' + encodeURIComponent(email.contractor.email) + '?' + params.join('&');
+      btn.href   = mailtoUrl;
+      btn.target = '_blank';
+      btn.rel    = 'noopener';
+      // When clicked, mark as sent
+      btn.addEventListener("click", function() {
+        if (reviewEmails[idx].status === 'sent') return;
         reviewEmails[idx].status = 'sent';
         var statusEl = document.getElementById('review-status-' + idx);
-        if (statusEl) { statusEl.className = 'review-status sent'; statusEl.textContent = 'Opened in Outlook'; }
-        btn.className = 'btn-send-this sent';
-        btn.textContent = 'Sent';
+        if (statusEl) { statusEl.className = 'review-status sent'; statusEl.textContent = 'Sent ✓'; }
+        btn.className   = 'btn-send-this sent';
+        btn.textContent = 'Sent ✓';
+        btn.removeAttribute('href');
         updateReviewProgress();
       });
     })(i);
@@ -2630,6 +2632,22 @@ function updateReviewProgress() {
   const btn = document.getElementById("btn-send-all");
   btn.textContent = "Send All Remaining (" + remaining + ")";
   btn.disabled = (remaining === 0);
+}
+
+function updateMailtoLinks() {
+  reviewEmails.forEach(function(email, idx) {
+    var btn = document.getElementById('btn-send-' + idx);
+    if (!btn || email.status === 'sent') return;
+    var subjectEl = document.getElementById('review-subject-' + idx);
+    var bodyEl    = document.getElementById('review-body-' + idx);
+    if (!subjectEl || !bodyEl) return;
+    var s = loadSettings();
+    var params = [];
+    if (s && s.email) params.push('cc=' + encodeURIComponent(s.email));
+    params.push('subject=' + encodeURIComponent(subjectEl.value.trim()));
+    params.push('body=' + encodeURIComponent(bodyEl.value.trim()));
+    btn.href = 'mailto:' + encodeURIComponent(email.contractor.email) + '?' + params.join('&');
+  });
 }
 
 function sendSingleEmail(idx) {
