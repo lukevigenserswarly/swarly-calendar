@@ -2703,111 +2703,278 @@ function buildTruckEmail(job, contractor, qty, truckRows) {
   const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
   const truckBreakdown = Object.entries(
     truckRows.reduce((acc, r) => { if(r.qty>0){acc[r.truckType]=(acc[r.truckType]||0)+r.qty;} return acc; }, {})
-  ).map(([t,q]) => `  - ${q}x ${t}`).join("\n");
+  ).map(([t,q]) => "  - " + q + "x " + t).join("\n");
   const totalTonnage = truckRows.reduce((s,r)=>s+(r.qty||0)*(TRUCK_TONNAGE[r.truckType]||0),0);
-  return [
-    `Looking to book you in for ${dateStr}${job.shift ? " (" + job.shift + " Shift)" : ""}. Job is at ${job.location || "TBA"} and I'll need the following trucks:`,
-    ``,
-    truckBreakdown,
-    ``,
-    `Total cartage: ${totalTonnage}T`,
-    ``,
-    `Please confirm you're available.`,
-    ``,
-    `Thank you,`,
-  ].filter(l => l !== null).join("\n");
-}
-
-function buildProfilerEmail(job, contractor, profiler) {
-  const dur   = dateDiffDays(job.startDate, job.endDate) + 1;
-  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  const sizes = [profiler.size1m ? "1m" : "", profiler.size2m ? "2m" : ""].filter(Boolean).join(" and ");
-  return [
-    `Looking to book you in for ${dateStr}${job.shift ? " (" + job.shift + " Shift)" : ""}. Job is at ${job.location || "TBA"} and I'll need a${sizes ? " " + sizes : ""} profiler.`,
-    profiler.notes ? `\n${profiler.notes}` : "",
-    ``,
-    `Please confirm you're available.`,
-    ``,
-    `Thank you,`,
-  ].filter(l => l !== null).join("\n");
-}
-
-function buildTCEmail(job, contractor, tc) {
-  const dur   = dateDiffDays(job.startDate, job.endDate) + 1;
-  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  const what  = [
-    tc.count ? tc.count + " TC" + (parseInt(tc.count) !== 1 ? "s" : "") : "",
-    tc.utes  ? tc.utes  + " ute" + (parseInt(tc.utes)  !== 1 ? "s" : "") : "",
-  ].filter(Boolean).join(" and ");
-  return [
-    `Looking to book you in for ${dateStr}${job.shift ? " (" + job.shift + " Shift)" : ""}. Job is at ${job.location || "TBA"} and I'll need ${what || "traffic control"}.`,
-    tc.notes ? `\n${tc.notes}` : "",
-    ``,
-    `Please confirm you're available.`,
-    ``,
-    `Thank you,`,
-  ].filter(l => l !== null).join("\n");
-}
-
-function buildAsphaltEmail(job, contractor, asphalt) {
-  const dur     = dateDiffDays(job.startDate, job.endDate) + 1;
-  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  const mixes   = asphalt.mixes || [];
-  const totalT  = mixes.reduce((s, r) => s + (parseFloat(r.tonnes) || 0), 0);
-
   const lines = [];
-
-  // Opening
-  lines.push("Can I make a booking please for the following:");
+  lines.push("Hi " + (contractor.name || "there") + ",");
   lines.push("");
-  lines.push("Date:          " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
-  lines.push("Location:      " + (job.location || "TBA"));
-  if (job.jobRef) lines.push("Job Number:    " + job.jobRef);
+  lines.push("Hope you are well. I am looking to make a cartage booking with you for the following job:");
   lines.push("");
-
-  // Mix orders
-  lines.push("Mix Order:");
-  if (mixes.length > 0) {
-    mixes.forEach(r => {
-      const timePart = r.time ? " — Load-out: " + r.time : "";
-      lines.push("  • " + (r.mix || "TBA") + (r.tonnes ? "   " + r.tonnes + "T" : "") + timePart);
-    });
-    if (totalT > 0) lines.push("  Total: " + totalT + "T");
-  } else {
-    lines.push("  TBA");
-  }
-
-  // Site contact
+  lines.push("Date:              " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
+  lines.push("Location:          " + (job.location || "TBA"));
+  if (job.jobRef) lines.push("Job Ref:           " + job.jobRef);
+  lines.push("Client:            " + (job.title || "TBA"));
   lines.push("");
-  if (asphalt.contact || asphalt.phone) {
-    lines.push("Site Contact:  " + [asphalt.contact, asphalt.phone].filter(Boolean).join("  |  "));
-  }
-
-  if (asphalt.notes) {
-    lines.push("");
-    lines.push("Notes:         " + asphalt.notes);
-  }
-
+  lines.push("Trucks Required:");
+  lines.push(truckBreakdown);
   lines.push("");
-  lines.push("Please confirm you can accommodate this order.");
+  lines.push("Total Estimated Cartage:  " + totalTonnage + "T");
   lines.push("");
-  lines.push("Thank you,");
+  lines.push("Please note trucks will need to be onsite and ready for loading at the scheduled start time. Any delays must be communicated as early as possible.");
+  lines.push("");
+  lines.push("Could you please confirm your availability and that the above trucks are available for this date?");
+  lines.push("");
+  lines.push("Please do not hesitate to contact me should you have any queries.");
+  lines.push("");
 
   return lines.join("\n");
 }
 
-function buildCoreEmail(job, contractor, core) {
-  const dur     = dateDiffDays(job.startDate, job.endDate) + 1;
+function buildProfilerEmail(job, contractor, profiler) {
+  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
   const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  return [
-    `Looking to book you in for ${dateStr}${job.shift ? " (" + job.shift + " Shift)" : ""}. Job is at ${job.location || "TBA"} and I'll need core testing carried out.`,
-    core.notes ? `
-${core.notes}` : "",
-    ``,
-    `Please confirm you're available.`,
-    ``,
-    `Thank you,`,
-  ].filter(l => l !== null).join("\n");
+  const sizes = [profiler.size1m ? "1m" : "", profiler.size2m ? "2m" : ""].filter(Boolean).join(" and ");
+  const lines = [];
+  lines.push("Hi " + (contractor.name || "there") + ",");
+  lines.push("");
+  lines.push("Hope you are well. I am looking to make a profiling booking with you for the following job:");
+  lines.push("");
+  lines.push("Date:              " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
+  lines.push("Location:          " + (job.location || "TBA"));
+  if (job.jobRef) lines.push("Job Ref:           " + job.jobRef);
+  lines.push("Client:            " + (job.title || "TBA"));
+  lines.push("");
+  lines.push("Equipment Required:");
+  lines.push("  - " + (sizes ? sizes : "TBA") + " Profiler");
+  if (profiler.notes) {
+    lines.push("");
+    lines.push("Additional Notes:");
+    lines.push(profiler.notes);
+  }
+  lines.push("");
+  lines.push("Please ensure the profiler is onsite and ready at the scheduled start time. All profilings are to be carted offsite unless otherwise advised.");
+  lines.push("");
+  lines.push("Could you please confirm your availability for this date?");
+  lines.push("");
+  lines.push("Please do not hesitate to contact me should you have any queries.");
+  lines.push("");
+
+  return lines.join("\n");
+}
+
+function buildTCEmail(job, contractor, tc) {
+  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
+  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
+  const tcCount = tc.count ? tc.count + " Traffic Controller" + (parseInt(tc.count) !== 1 ? "s" : "") : "";
+  const uteCount = tc.utes ? tc.utes + " Ute" + (parseInt(tc.utes) !== 1 ? "s" : "") : "";
+  const resources = [tcCount, uteCount].filter(Boolean).join("\n  - ");
+  const lines = [];
+  lines.push("Hi " + (contractor.name || "there") + ",");
+  lines.push("");
+  lines.push("Hope you are well. I am looking to make a traffic control booking with you for the following job:");
+  lines.push("");
+  lines.push("Date:              " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
+  lines.push("Location:          " + (job.location || "TBA"));
+  if (job.jobRef) lines.push("Job Ref:           " + job.jobRef);
+  lines.push("Client:            " + (job.title || "TBA"));
+  lines.push("");
+  lines.push("Traffic Control Requirements:");
+  lines.push("  - " + (resources || "Traffic Control — details TBA"));
+  if (tc.notes) {
+    lines.push("");
+    lines.push("Additional Notes:");
+    lines.push(tc.notes);
+  }
+  lines.push("");
+  lines.push("Please ensure all traffic controllers are onsite and set up prior to works commencing. A current TMP will be required onsite at all times.");
+  lines.push("");
+  lines.push("Could you please confirm your availability and provide a quote if required?");
+  lines.push("");
+  lines.push("Please do not hesitate to contact me should you have any queries.");
+  lines.push("");
+
+  return lines.join("\n");
+}
+
+function buildAsphaltEmail(job, contractor, asphalt) {
+  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
+  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
+  const mixes = asphalt.mixes || [];
+  const totalT = mixes.reduce((s, r) => s + (parseFloat(r.tonnes) || 0), 0);
+  const lines = [];
+  lines.push("Hi " + (contractor.name || "there") + ",");
+  lines.push("");
+  lines.push("Hope you are well. Could I please make a booking for the following asphalt order:");
+  lines.push("");
+  lines.push("Date:              " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
+  lines.push("Location:          " + (job.location || "TBA"));
+  if (job.jobRef) lines.push("Job Ref:           " + job.jobRef);
+  lines.push("Client:            " + (job.title || "TBA"));
+  lines.push("");
+  lines.push("Mix Order:");
+  if (mixes.length > 0) {
+    mixes.forEach(function(r) {
+      const timePart = r.time ? "   Load-out: " + r.time : "";
+      lines.push("  • " + (r.mix || "TBA") + (r.tonnes ? "   " + r.tonnes + "T" : "") + timePart);
+    });
+    if (totalT > 0) lines.push("");
+    if (totalT > 0) lines.push("  Total:  " + totalT + "T");
+  } else {
+    lines.push("  TBA");
+  }
+  lines.push("");
+  if (asphalt.contact || asphalt.phone) {
+    lines.push("Site Contact:      " + [asphalt.contact, asphalt.phone].filter(Boolean).join("  |  "));
+    lines.push("");
+  }
+  if (asphalt.notes) {
+    lines.push("Notes:");
+    lines.push(asphalt.notes);
+    lines.push("");
+  }
+  lines.push("Please ensure all material is delivered to site on time and that drivers are briefed on site access requirements. Testing certificates will be required for all loads.");
+  lines.push("");
+  lines.push("Could you please confirm you can accommodate this order?");
+  lines.push("");
+  lines.push("Please do not hesitate to contact me should you have any queries.");
+  lines.push("");
+
+  return lines.join("\n");
+}
+
+function buildTruckEmail(job, contractor, qty, truckRows) {
+  truckRows = truckRows || [];
+  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
+  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
+  const truckBreakdown = Object.entries(
+    truckRows.reduce((acc, r) => { if(r.qty>0){acc[r.truckType]=(acc[r.truckType]||0)+r.qty;} return acc; }, {})
+  ).map(([t,q]) => "  - " + q + "x " + t + (q > 1 ? "s" : "")).join("\n");
+  const totalTonnage = truckRows.reduce((s,r)=>s+(r.qty||0)*(TRUCK_TONNAGE[r.truckType]||0),0);
+  const lines = [];
+  lines.push("Cartage Booking Request");
+  lines.push("");
+  lines.push("Date:        " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
+  lines.push("Location:    " + (job.location || "TBA"));
+  if (job.jobRef) lines.push("Job Ref:     " + job.jobRef);
+  lines.push("");
+  lines.push("Trucks Required:");
+  lines.push(truckBreakdown);
+  lines.push("");
+  lines.push("Total Estimated Cartage:  " + totalTonnage + "T");
+  lines.push("");
+  lines.push("Please confirm your availability.");
+  return lines.join("\n");
+}
+
+function buildProfilerEmail(job, contractor, profiler) {
+  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
+  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
+  const sizeList = [profiler.size1m ? "1m" : "", profiler.size2m ? "2m" : ""].filter(Boolean);
+  const sizeCount = sizeList.length;
+  const sizeStr = sizeList.join(" and ");
+  const lines = [];
+  lines.push("Profiling Booking Request");
+  lines.push("");
+  lines.push("Date:        " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
+  lines.push("Location:    " + (job.location || "TBA"));
+  if (job.jobRef) lines.push("Job Ref:     " + job.jobRef);
+  lines.push("");
+  lines.push("Equipment Required:");
+  lines.push("  - " + (sizeCount > 1 ? sizeCount + "x Profilers (" + sizeStr + ")" : (sizeStr ? sizeStr + " Profiler" : "Profiler TBA")));
+  if (profiler.notes) {
+    lines.push("");
+    lines.push(profiler.notes);
+  }
+  lines.push("");
+  lines.push("Please confirm your availability.");
+  return lines.join("\n");
+}
+
+function buildTCEmail(job, contractor, tc) {
+  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
+  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
+  const tcNum = parseInt(tc.count) || 0;
+  const uteNum = parseInt(tc.utes) || 0;
+  const tcStr = tcNum > 0 ? "  - " + tcNum + "x Traffic Controller" + (tcNum > 1 ? "s" : "") : "";
+  const uteStr = uteNum > 0 ? "  - " + uteNum + "x Ute" + (uteNum > 1 ? "s" : "") : "";
+  const lines = [];
+  lines.push("Traffic Control Booking Request");
+  lines.push("");
+  lines.push("Date:        " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
+  lines.push("Location:    " + (job.location || "TBA"));
+  if (job.jobRef) lines.push("Job Ref:     " + job.jobRef);
+  lines.push("");
+  lines.push("Traffic Control Required:");
+  if (tcStr) lines.push(tcStr);
+  if (uteStr) lines.push(uteStr);
+  if (!tcStr && !uteStr) lines.push("  - TBA");
+  if (tc.notes) {
+    lines.push("");
+    lines.push(tc.notes);
+  }
+  lines.push("");
+  lines.push("Please confirm your availability.");
+  return lines.join("\n");
+}
+
+function buildAsphaltEmail(job, contractor, asphalt) {
+  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
+  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
+  const mixes = asphalt.mixes || [];
+  const totalT = mixes.reduce((s, r) => s + (parseFloat(r.tonnes) || 0), 0);
+  const lines = [];
+  lines.push("Asphalt Order");
+  lines.push("");
+  lines.push("Date:        " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
+  lines.push("Location:    " + (job.location || "TBA"));
+  if (job.jobRef) lines.push("Job Ref:     " + job.jobRef);
+  lines.push("");
+  lines.push("Mix Order:");
+  if (mixes.length > 0) {
+    mixes.forEach(function(r) {
+      const timePart = r.time ? "   Load-out: " + r.time : "";
+      lines.push("  - " + (r.mix || "TBA") + (r.tonnes ? "   " + r.tonnes + "T" : "") + timePart);
+    });
+    if (totalT > 0) {
+      lines.push("");
+      lines.push("  Total:  " + totalT + "T");
+    }
+  } else {
+    lines.push("  TBA");
+  }
+  if (asphalt.contact || asphalt.phone) {
+    lines.push("");
+    lines.push("Site Contact:  " + [asphalt.contact, asphalt.phone].filter(Boolean).join("  |  "));
+  }
+  if (asphalt.notes) {
+    lines.push("");
+    lines.push(asphalt.notes);
+  }
+  lines.push("");
+  lines.push("Please confirm you can accommodate this order.");
+  return lines.join("\n");
+}
+
+function buildCoreEmail(job, contractor, core) {
+  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
+  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
+  const lines = [];
+  lines.push("Core Testing Booking Request");
+  lines.push("");
+  lines.push("Date:        " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
+  lines.push("Location:    " + (job.location || "TBA"));
+  if (job.jobRef) lines.push("Job Ref:     " + job.jobRef);
+  lines.push("");
+  if (core.mix)   lines.push("Mix:         " + core.mix);
+  if (core.plant) lines.push("Plant:       " + core.plant);
+  if (core.depth) lines.push("Depth:       " + core.depth);
+  if (core.notes) {
+    lines.push("");
+    lines.push(core.notes);
+  }
+  lines.push("");
+  lines.push("Please confirm your availability.");
+  return lines.join("\n");
 }
 
 async function sendContractorEmail(emailObj) {
