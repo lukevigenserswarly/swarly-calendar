@@ -1923,25 +1923,112 @@ const DEFAULT_CONTRACTORS = {
   ],
 };
 
+// ─── SHARED DATA LAYER ───────────────────────────────────────────────────────
+// Contractors and orders are stored server-side so all users see the same data
+var SHARED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx2jPexbzpgJItSUCltu8x9oVJVHYkc23UhOYfTbAhDqF7BT2vYP9FsZ8kwGH8hReF6/exec';
+
+// In-memory cache — loaded once on startup, written back on every save
+var _sharedContractors = null;
+var _sharedOrders      = null;
+
+function fetchShared(action, callback) {
+  var cbName = 'sharedCB_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+  var script = document.createElement('script');
+  var timer  = setTimeout(function() {
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    callback(null);
+  }, 15000);
+  window[cbName] = function(data) {
+    clearTimeout(timer);
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    callback(data && data.success ? data.data : null);
+  };
+  script.onerror = function() {
+    clearTimeout(timer);
+    delete window[cbName];
+    callback(null);
+  };
+  script.src = SHARED_SCRIPT_URL + '?action=' + action + '&callback=' + cbName;
+  document.head.appendChild(script);
+}
+
+function saveShared(action, data, callback) {
+  fetch(SHARED_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: action, data: data })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) { if (callback) callback(d.success); })
+  .catch(function() { if (callback) callback(false); });
+}
+
 function loadContractors() {
+  if (_sharedContractors) return _sharedContractors;
+  // Fallback to localStorage while async load is in progress
   try {
     const saved = JSON.parse(localStorage.getItem(CONTRACTORS_KEY));
-    if (!saved) return JSON.parse(JSON.stringify(DEFAULT_CONTRACTORS));
-    // Merge any missing types (e.g. asphalt added after initial save)
-    const merged = { ...JSON.parse(JSON.stringify(DEFAULT_CONTRACTORS)), ...saved };
-    return merged;
-  } catch { return JSON.parse(JSON.stringify(DEFAULT_CONTRACTORS)); }
+    if (saved) return { ...JSON.parse(JSON.stringify(DEFAULT_CONTRACTORS)), ...saved };
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_CONTRACTORS));
 }
+
 function saveContractors(data) {
-  localStorage.setItem(CONTRACTORS_KEY, JSON.stringify(data));
+  _sharedContractors = data;
+  localStorage.setItem(CONTRACTORS_KEY, JSON.stringify(data)); // local backup
+  saveShared('saveContractors', data, function(ok) {
+    if (!ok) console.warn('Failed to save contractors to server');
+  });
 }
 
 // ─── ORDER DATA ───────────────────────────────────────────────────────────────
 const ORDERS_KEY = "swarly_orders_v1";
+
 function loadOrders() {
+  if (_sharedOrders) return _sharedOrders;
   try { return JSON.parse(localStorage.getItem(ORDERS_KEY)) || {}; } catch { return {}; }
 }
-function saveOrders(data) { localStorage.setItem(ORDERS_KEY, JSON.stringify(data)); }
+
+function saveOrders(data) {
+  _sharedOrders = data;
+  localStorage.setItem(ORDERS_KEY, JSON.stringify(data)); // local backup
+  saveShared('saveOrders', data, function(ok) {
+    if (!ok) console.warn('Failed to save orders to server');
+  });
+}
+
+// ─── LOAD SHARED DATA ON STARTUP ─────────────────────────────────────────────
+function loadSharedDataAndInit() {
+  // Load contractors
+  fetchShared('getContractors', function(data) {
+    if (data) {
+      _sharedContractors = { ...JSON.parse(JSON.stringify(DEFAULT_CONTRACTORS)), ...data };
+      localStorage.setItem(CONTRACTORS_KEY, JSON.stringify(_sharedContractors));
+    } else {
+      // Fall back to local
+      try {
+        const local = JSON.parse(localStorage.getItem(CONTRACTORS_KEY));
+        if (local) _sharedContractors = { ...JSON.parse(JSON.stringify(DEFAULT_CONTRACTORS)), ...local };
+      } catch(e) {}
+    }
+  });
+
+  // Load orders
+  fetchShared('getOrders', function(data) {
+    if (data) {
+      _sharedOrders = data;
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(data));
+      render(); // Re-render with shared order data (pill indicators)
+    } else {
+      try {
+        const local = JSON.parse(localStorage.getItem(ORDERS_KEY));
+        if (local) _sharedOrders = local;
+      } catch(e) {}
+    }
+  });
+}
 
 // ─── ORDER MODAL ──────────────────────────────────────────────────────────────
 let currentOrderJob = null;
@@ -3224,6 +3311,9 @@ function syncGoogleCalendar() {
 
 syncGoogleCalendar();
 setInterval(syncGoogleCalendar, GCAL_SYNC_INTERVAL);
+
+// Load shared contractor and order data from server
+loadSharedDataAndInit();
 
 
 
