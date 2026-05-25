@@ -70,38 +70,6 @@
   #subheader-top { display: flex; align-items: center; justify-content: space-between; padding-bottom: 5px; }
   #month-label { color: #1A4F7A; font-weight: 800; font-size: 13px; letter-spacing: 0.02em; }
   #gcal-status { font-size: 11px; color: #2176AE; font-weight: 600; }
-  #slider-bar { display: flex; align-items: center; gap: 10px; padding: 4px 0 7px; }
-  .slider-edge-label { font-size: 10px; font-weight: 700; color: #8AAAC0; white-space: nowrap; flex-shrink: 0; min-width: 52px; }
-  #slider-label-right { text-align: right; }
-  #slider-track-wrap { flex: 1; position: relative; }
-  #timeline-slider {
-    -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
-    border-radius: 2px; background: linear-gradient(to right, #2176AE 50%, #C8DCF0 50%);
-    outline: none; cursor: pointer;
-  }
-  #timeline-slider::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
-    background: #2176AE; border: 3px solid #fff;
-    box-shadow: 0 1px 6px rgba(33,118,174,0.4); cursor: pointer; transition: transform 0.1s;
-  }
-  #timeline-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
-  #timeline-slider::-moz-range-thumb {
-    width: 20px; height: 20px; border-radius: 50%; background: #2176AE;
-    border: 3px solid #fff; box-shadow: 0 1px 6px rgba(33,118,174,0.4); cursor: pointer;
-  }
-  #slider-thumb-label {
-    position: absolute; top: -22px; background: #1A3A5C; color: #fff;
-    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
-    white-space: nowrap; pointer-events: none; transform: translateX(-50%);
-    opacity: 0; transition: opacity 0.15s;
-  }
-
-  /* ---------- CALENDAR WRAP ---------- */
-  #cal-wrap {
-    margin-top: 124px;
-    padding-bottom: 50px;
-    display: flex; align-items: flex-start; overflow: hidden;
-  }
   #label-panel {
     flex-shrink: 0; width: 158px; min-width: 158px;
     position: sticky; left: 0; z-index: 120; background: #fff;
@@ -121,13 +89,13 @@
 
   /* Day header cells */
   .day-header-cell { flex-shrink: 0; text-align: center; padding: 5px 2px 4px; border-right: 1px solid #D8DFE8; }
-  .day-header-cell.today-col { background: #D4EAFB; }
+  .day-header-cell.today-col { background: #2176AE; }
   .day-header-cell.weekend-col { background: #EEE9F5; }
   .day-header-cell.ph-col { background: rgba(255,200,50,0.15); }
   .dh-weekday { font-size: 10px; font-weight: 700; color: #5A6A8A; text-transform: uppercase; letter-spacing: 0.04em; }
   .dh-num { font-size: 13px; font-weight: 600; color: #2D3748; width: 22px; height: 22px; line-height: 22px; border-radius: 50%; margin: 2px auto 0; text-align: center; }
-  .today-col .dh-num { background: #2176AE; color: #fff; font-weight: 800; }
-  .today-col .dh-weekday { color: #1A5E8A; }
+  .today-col .dh-num { background: #fff; color: #2176AE; font-weight: 800; font-size: 15px; }
+  .today-col .dh-weekday { color: #fff; font-weight: 800; }
   .ph-col .dh-weekday { color: #8B6914; }
   .ph-col .dh-num { color: #7A5A00; font-weight: 700; }
   .dh-ph { font-size: 9px; line-height: 1; margin-top: 1px; }
@@ -147,7 +115,18 @@
     flex-shrink: 0; border-right: 1px solid #D8E2EC; border-bottom: 2px solid #B8C8D8;
     padding: 3px 2px; position: relative; cursor: pointer; vertical-align: top; box-sizing: border-box;
   }
-  .day-cell.today-col { background: rgba(33,118,174,0.05); }
+  .day-cell.today-col { background: rgba(33,118,174,0.08); border-left: 2px solid #2176AE; border-right: 2px solid #2176AE; }
+  .today-time-line {
+    position: absolute;
+    top: 0;
+    width: 3px;
+    background: #2176AE;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 10;
+    box-shadow: 0 0 6px rgba(33,118,174,0.5);
+    transition: height 60s linear;
+  }
   .day-cell.weekend-col { background: rgba(100,90,150,0.03); }
   .day-cell.ph-col { background: rgba(255,200,50,0.10) !important; }
   .day-cell:hover { background: rgba(33,118,174,0.07); }
@@ -493,14 +472,7 @@
       <span id="gcal-status"></span>
     </div>
   </div>
-  <div id="slider-bar">
-    <span class="slider-edge-label" id="slider-label-left"></span>
-    <div id="slider-track-wrap">
-      <input type="range" id="timeline-slider" min="0" max="104" step="1" value="52" />
-      <div id="slider-thumb-label"></div>
-    </div>
-    <span class="slider-edge-label" id="slider-label-right"></span>
-  </div>
+
 </div>
 
 <!-- CALENDAR -->
@@ -1705,7 +1677,7 @@ jd.max = (nowY + 5) + "-12-31";
 // 0 = 2 years ago, 52 = today's week, 104 = 2 years ahead
 const SLIDER_WEEKS  = 104;
 const SLIDER_CENTRE = 52;  // today
-const sliderEl      = document.getElementById("timeline-slider");
+const sliderEl      = null; // slider removed
 const thumbLabel    = document.getElementById("slider-thumb-label");
 const labelLeft     = document.getElementById("slider-label-left");
 const labelRight    = document.getElementById("slider-label-right");
@@ -1772,6 +1744,7 @@ sliderEl.addEventListener("mouseleave", () => { thumbLabel.style.opacity = "0"; 
 const _origRender = render;
 render = function() {
   _origRender();
+  setTimeout(updateTimeLine, 50);
   updateSliderFromAnchor();
 };
 
@@ -3262,6 +3235,40 @@ function syncGoogleCalendar() {
 
 syncGoogleCalendar();
 setInterval(syncGoogleCalendar, GCAL_SYNC_INTERVAL);
+
+// ─── TODAY TIME LINE ──────────────────────────────────────────────────────────
+// Blue vertical line through today's column showing current time of day
+// Work day defined as 5:00AM to 7:00PM (14 hours)
+var TIME_LINE_START_HOUR = 5;
+var TIME_LINE_END_HOUR   = 19;
+
+function updateTimeLine() {
+  document.querySelectorAll('.today-time-line').forEach(function(el) {
+    el.parentNode.removeChild(el);
+  });
+
+  var now  = new Date();
+  var hrs  = now.getHours() + now.getMinutes() / 60;
+  var span = TIME_LINE_END_HOUR - TIME_LINE_START_HOUR;
+  var pct  = Math.min(1, Math.max(0, (hrs - TIME_LINE_START_HOUR) / span));
+
+  var todayCells = document.querySelectorAll('.day-cell.today-col');
+  todayCells.forEach(function(cell) {
+    cell.style.position = 'relative';
+    var line = document.createElement('div');
+    line.className = 'today-time-line';
+    line.style.height    = Math.round(pct * 100) + '%';
+    line.style.left      = '50%';
+    line.style.transform = 'translateX(-50%)';
+    cell.appendChild(line);
+  });
+}
+
+updateTimeLine();
+setInterval(updateTimeLine, 60000);
+
+// updateTimeLine is called on interval and on load
+// render wrapper already exists above
 
 </script>
 </body>
