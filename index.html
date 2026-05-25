@@ -2640,11 +2640,7 @@ function sendViaOutlook({ to, subject, body }) {
   params.push('subject=' + encodeURIComponent(subject));
   params.push('body=' + encodeURIComponent(body));
   var mailtoUrl = 'mailto:' + encodeURIComponent(to) + '?' + params.join('&');
-  var a = document.createElement('a');
-  a.href = mailtoUrl;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(function() { document.body.removeChild(a); }, 500);
+  window.location.href = mailtoUrl;
   return true;
 }
 // ─── EMAIL BUILDERS ───────────────────────────────────────────────────────────
