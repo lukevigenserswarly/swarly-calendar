@@ -2581,9 +2581,40 @@ function renderReviewCards() {
       "<textarea class=\"review-body-textarea\" id=\"review-body-" + i + "\">" + safeBody + "</textarea></div>" +
       "<div class=\"review-send-row\">" +
       "<span class=\"review-status pending\" id=\"review-status-" + i + "\">Ready to send</span>" +
-      "<button class=\"btn-send-this\" id=\"btn-send-" + i + "\">Send to " + safeName + "</button>" +
+      "<a class=\"btn-send-this\" id=\"btn-send-" + i + "\" href=\"#\">Send to " + safeName + "</a>" +
       "</div></div>";
-    card.querySelector(".btn-send-this").addEventListener("click", () => sendSingleEmail(i));
+    (function(idx) {
+      var btn = card.querySelector(".btn-send-this");
+      btn.addEventListener("click", function(e) {
+        e.preventDefault();
+        var email   = reviewEmails[idx];
+        if (email.status === 'sent') return;
+        var subject  = document.getElementById('review-subject-' + idx).value.trim();
+        var bodyText = document.getElementById('review-body-' + idx).value.trim();
+        var s = loadSettings();
+        var params = [];
+        if (s && s.email) params.push('cc=' + encodeURIComponent(s.email));
+        params.push('subject=' + encodeURIComponent(subject));
+        params.push('body=' + encodeURIComponent(bodyText));
+        var mailtoUrl = 'mailto:' + encodeURIComponent(email.contractor.email) + '?' + params.join('&');
+        btn.href = mailtoUrl;
+        btn.target = '_blank';
+        // Re-trigger as a real link click
+        var a = document.createElement('a');
+        a.href = mailtoUrl;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        // Mark as sent
+        reviewEmails[idx].status = 'sent';
+        var statusEl = document.getElementById('review-status-' + idx);
+        if (statusEl) { statusEl.className = 'review-status sent'; statusEl.textContent = 'Opened in Outlook'; }
+        btn.className = 'btn-send-this sent';
+        btn.textContent = 'Sent';
+        updateReviewProgress();
+      });
+    })(i);
     body.appendChild(card);
   });
 }
