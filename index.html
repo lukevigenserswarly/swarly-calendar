@@ -116,16 +116,16 @@
     padding: 3px 2px; position: relative; cursor: pointer; vertical-align: top; box-sizing: border-box;
   }
   .day-cell.today-col { background: rgba(33,118,174,0.08); border-left: 2px solid #2176AE; border-right: 2px solid #2176AE; }
-  .today-time-line {
+  #today-time-line {
     position: absolute;
     top: 0;
+    bottom: 0;
     width: 3px;
     background: #2176AE;
-    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(33,118,174,0.7);
     pointer-events: none;
-    z-index: 10;
-    box-shadow: 0 0 6px rgba(33,118,174,0.5);
-    transition: height 60s linear;
+    z-index: 50;
+    border-radius: 2px;
   }
   .day-cell.weekend-col { background: rgba(100,90,150,0.03); }
   .day-cell.ph-col { background: rgba(255,200,50,0.10) !important; }
@@ -3237,38 +3237,51 @@ syncGoogleCalendar();
 setInterval(syncGoogleCalendar, GCAL_SYNC_INTERVAL);
 
 // ─── TODAY TIME LINE ──────────────────────────────────────────────────────────
-// Blue vertical line through today's column showing current time of day
-// Work day defined as 5:00AM to 7:00PM (14 hours)
+// A single blue vertical line running full height of the calendar grid
+// positioned within today's column based on current time of day
+// Work day: 5:00AM to 7:00PM
 var TIME_LINE_START_HOUR = 5;
 var TIME_LINE_END_HOUR   = 19;
 
 function updateTimeLine() {
-  document.querySelectorAll('.today-time-line').forEach(function(el) {
-    el.parentNode.removeChild(el);
-  });
+  // Remove existing line
+  var existing = document.getElementById('today-time-line');
+  if (existing) existing.parentNode.removeChild(existing);
 
+  // Find the grid scroll container and today column header
+  var gridScroll = document.getElementById('grid-scroll');
+  var calInner   = document.getElementById('cal-inner');
+  if (!gridScroll || !calInner) return;
+
+  // Find a today cell to get its horizontal position
+  var todayCell = document.querySelector('.day-header-cell.today-col');
+  if (!todayCell) return;
+
+  // Get positions relative to cal-inner
+  var innerRect  = calInner.getBoundingClientRect();
+  var cellRect   = todayCell.getBoundingClientRect();
+
+  // Calculate time progress
   var now  = new Date();
   var hrs  = now.getHours() + now.getMinutes() / 60;
   var span = TIME_LINE_END_HOUR - TIME_LINE_START_HOUR;
   var pct  = Math.min(1, Math.max(0, (hrs - TIME_LINE_START_HOUR) / span));
 
-  var todayCells = document.querySelectorAll('.day-cell.today-col');
-  todayCells.forEach(function(cell) {
-    cell.style.position = 'relative';
-    var line = document.createElement('div');
-    line.className = 'today-time-line';
-    line.style.height    = Math.round(pct * 100) + '%';
-    line.style.left      = '50%';
-    line.style.transform = 'translateX(-50%)';
-    cell.appendChild(line);
-  });
+  // Position: centre of today column + progress offset within cell width
+  var cellWidth   = cellRect.width;
+  var leftOffset  = (cellRect.left - innerRect.left) + (pct * cellWidth);
+
+  // Create the line
+  var line = document.createElement('div');
+  line.id = 'today-time-line';
+  line.style.left = Math.round(leftOffset) + 'px';
+
+  calInner.style.position = 'relative';
+  calInner.appendChild(line);
 }
 
 updateTimeLine();
 setInterval(updateTimeLine, 60000);
-
-// updateTimeLine is called on interval and on load
-// render wrapper already exists above
 
 </script>
 </body>
