@@ -70,14 +70,17 @@
   #subheader-top { display: flex; align-items: center; justify-content: space-between; padding-bottom: 5px; }
   #month-label { color: #1A4F7A; font-weight: 800; font-size: 13px; letter-spacing: 0.02em; }
   #gcal-status { font-size: 11px; color: #2176AE; font-weight: 600; }
-  #cal-wrap { display: flex; align-items: flex-start; overflow: hidden; flex: 1; min-height: 0; }
+  #cal-wrap {
+    margin-top: 106px;
+    padding-bottom: 50px;
+    display: flex; align-items: flex-start; overflow: hidden;
+  }
   #label-panel {
     flex-shrink: 0; width: 158px; min-width: 158px;
     position: sticky; left: 0; z-index: 120; background: #fff;
     border-right: 2px solid #D0D7E3;
-    align-self: flex-start;
   }
-  #grid-scroll { flex: 1; overflow-x: auto; overflow-y: visible; min-width: 0; }
+  #grid-scroll { flex: 1; overflow-x: auto; overflow-y: visible; }
   #label-header {
     background: #EEF2F8; border-bottom: 2px solid #C8D3E3;
   }
@@ -1694,7 +1697,6 @@ function updateSliderLabels(val)   { /* slider removed */ }
 const _origRender = render;
 render = function() {
   _origRender();
-  setTimeout(updateTimeLine, 50);
 };
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
@@ -3182,74 +3184,7 @@ function syncGoogleCalendar() {
 syncGoogleCalendar();
 setInterval(syncGoogleCalendar, GCAL_SYNC_INTERVAL);
 
-// ─── TODAY TIME LINE ──────────────────────────────────────────────────────────
-// Blue vertical line through today's column showing time progress
-// Injected into each today cell — safe approach that doesn't break layout
-var TIME_LINE_START_HOUR = 5;
-var TIME_LINE_END_HOUR   = 19;
 
-function updateTimeLine() {
-  // Remove any existing lines
-  document.querySelectorAll('#today-time-line').forEach(function(el) {
-    el.parentNode.removeChild(el);
-  });
-
-  // Only show if today is visible
-  var todayCells = document.querySelectorAll('.day-cell.today-col');
-  if (!todayCells.length) return;
-
-  // Calculate time progress
-  var now  = new Date();
-  var hrs  = now.getHours() + now.getMinutes() / 60;
-  var span = TIME_LINE_END_HOUR - TIME_LINE_START_HOUR;
-  var pct  = Math.min(1, Math.max(0, (hrs - TIME_LINE_START_HOUR) / span));
-
-  // Add a line to each today cell (one per row)
-  todayCells.forEach(function(cell) {
-    var line = document.createElement('div');
-    line.id  = 'today-time-line';
-    line.style.cssText = [
-      'position:absolute',
-      'top:0',
-      'bottom:0',
-      'width:3px',
-      'left:' + Math.round(pct * 100) + '%',
-      'background:#2176AE',
-      'box-shadow:0 0 8px rgba(33,118,174,0.8)',
-      'pointer-events:none',
-      'z-index:50',
-      'border-radius:2px'
-    ].join(';');
-    // Ensure cell is relative positioned
-    var existing = window.getComputedStyle(cell).position;
-    if (existing === 'static') cell.style.position = 'relative';
-    cell.appendChild(line);
-  });
-
-  // Also add to header today cell for full column effect
-  var headerCell = document.querySelector('.day-header-cell.today-col');
-  if (headerCell) {
-    var hline = document.createElement('div');
-    hline.id  = 'today-time-line';
-    hline.style.cssText = [
-      'position:absolute',
-      'top:0',
-      'bottom:0',
-      'width:3px',
-      'left:' + Math.round(pct * 100) + '%',
-      'background:rgba(255,255,255,0.6)',
-      'pointer-events:none',
-      'z-index:50',
-      'border-radius:2px'
-    ].join(';');
-    var hexisting = window.getComputedStyle(headerCell).position;
-    if (hexisting === 'static') headerCell.style.position = 'relative';
-    headerCell.appendChild(hline);
-  }
-}
-
-updateTimeLine();
-setInterval(updateTimeLine, 60000);
 
 </script>
 </body>
