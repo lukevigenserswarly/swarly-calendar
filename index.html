@@ -3022,15 +3022,24 @@ function setSyncStatus(status, message) {
 function syncGoogleCalendar() {
   setSyncStatus('syncing', 'Syncing...');
 
-  // Fetch calendar data directly from the Google Apps Script endpoint
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx2jPexbzpgJltSUCltu8x9oVJVHYkc23UhOYfTbAhDqF7BT2vYP9FsZ8kwGH8h/exec?action=getEvents';
+  // Use JSONP to bypass CORS — works from GitHub Pages to Google Apps Script
+  const SCRIPT_BASE = 'https://script.google.com/macros/s/AKfycbx2jPexbzpgJltSUCltu8x9oVJVHYkc23UhOYfTbAhDqF7BT2vYP9FsZ8kwGH8h/exec';
+  const callbackName = 'gcalCallback_' + Date.now();
 
-  fetch(SCRIPT_URL)
-    .then(function(res) {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    })
-    .then(function(data) {
+  // Set a timeout in case the script never loads
+  const timeout = setTimeout(function() {
+    setSyncStatus('error', 'Sync failed');
+    delete window[callbackName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+  }, 15000);
+
+  // Define the callback function
+  window[callbackName] = function(data) {
+    clearTimeout(timeout);
+    delete window[callbackName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+
+    try {
       const gcalEvents = (data && data.events) || [];
 
       // Remove all previous gcal jobs
@@ -3049,11 +3058,21 @@ function syncGoogleCalendar() {
       const time = new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
       setSyncStatus('ok', 'Synced ' + time);
       console.log('GCal sync: ' + gcalEvents.length + ' events at ' + time);
-    })
-    .catch(function(err) {
+    } catch(err) {
       setSyncStatus('error', 'Sync failed');
       console.error('GCal sync error:', err);
-    });
+    }
+  };
+
+  // Inject script tag to trigger JSONP request
+  var script = document.createElement('script');
+  script.src = SCRIPT_BASE + '?action=getEvents&callback=' + callbackName;
+  script.onerror = function() {
+    clearTimeout(timeout);
+    setSyncStatus('error', 'Sync failed');
+    delete window[callbackName];
+  };
+  document.head.appendChild(script);
 }
 
 // Kick off sync on load, then repeat every 30 minutes
