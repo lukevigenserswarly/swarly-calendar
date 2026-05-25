@@ -116,17 +116,7 @@
     padding: 3px 2px; position: relative; cursor: pointer; vertical-align: top; box-sizing: border-box;
   }
   .day-cell.today-col { background: rgba(33,118,174,0.08); border-left: 2px solid #2176AE; border-right: 2px solid #2176AE; }
-  #today-time-line {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: #2176AE;
-    box-shadow: 0 0 8px rgba(33,118,174,0.7);
-    pointer-events: none;
-    z-index: 50;
-    border-radius: 2px;
-  }
+
   .day-cell.weekend-col { background: rgba(100,90,150,0.03); }
   .day-cell.ph-col { background: rgba(255,200,50,0.10) !important; }
   .day-cell:hover { background: rgba(33,118,174,0.07); }
@@ -1695,61 +1685,15 @@ function anchorToSlider(anc) {
   return Math.max(0, Math.min(SLIDER_WEEKS, SLIDER_CENTRE + diff));
 }
 
-function updateSliderFromAnchor() {
-  const val = anchorToSlider(anchor);
-  sliderEl.value = val;
-  updateSliderTrack(val);
-  updateSliderLabels(val);
-}
+function updateSliderFromAnchor() { /* slider removed */ }
+function updateSliderTrack(val)    { /* slider removed */ }
+function updateSliderLabels(val)   { /* slider removed */ }
 
-function updateSliderTrack(val) {
-  const pct = (val / SLIDER_WEEKS) * 100;
-  sliderEl.style.background =
-    `linear-gradient(to right, #2176AE ${pct}%, #C8DCF0 ${pct}%)`;
-}
-
-function updateSliderLabels(val) {
-  // Edge labels: left = 2 years ago, right = 2 years ahead
-  const leftDate  = sliderToAnchor(0);
-  const rightDate = sliderToAnchor(SLIDER_WEEKS);
-  labelLeft.textContent  = leftDate.toLocaleDateString("en-AU", { month:"short", year:"numeric" });
-  labelRight.textContent = rightDate.toLocaleDateString("en-AU", { month:"short", year:"numeric" });
-
-  // Floating thumb label: show the week the thumb is on
-  const thumbDate = sliderToAnchor(parseInt(val));
-  thumbLabel.textContent = thumbDate.toLocaleDateString("en-AU", { day:"numeric", month:"short", year:"numeric" });
-
-  // Position thumb label under the thumb
-  const pct = val / SLIDER_WEEKS;
-  const trackW = sliderEl.offsetWidth || 300;
-  const thumbX = pct * (trackW - 20) + 10; // 20 = thumb diameter, 10 = half
-  thumbLabel.style.left = thumbX + "px";
-}
-
-// Dragging slider → move calendar live
-sliderEl.addEventListener("input", () => {
-  const val = parseInt(sliderEl.value);
-  anchor = sliderToAnchor(val);
-  updateSliderTrack(val);
-  updateSliderLabels(val);
-  render();
-});
-
-// Show thumb label on hover/drag
-sliderEl.addEventListener("mouseenter", () => { thumbLabel.style.opacity = "1"; });
-sliderEl.addEventListener("mouseleave", () => { thumbLabel.style.opacity = "0"; });
-
-// Sync slider whenever navigation arrows or jump-date change the anchor
-// (patch the existing render function to always sync after it runs)
 const _origRender = render;
 render = function() {
   _origRender();
   setTimeout(updateTimeLine, 50);
-  updateSliderFromAnchor();
 };
-
-// Initial setup
-updateSliderFromAnchor();
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
 const overlay    = document.getElementById("modal-overlay");
@@ -3237,29 +3181,20 @@ syncGoogleCalendar();
 setInterval(syncGoogleCalendar, GCAL_SYNC_INTERVAL);
 
 // ─── TODAY TIME LINE ──────────────────────────────────────────────────────────
-// A single blue vertical line running full height of the calendar grid
-// positioned within today's column based on current time of day
-// Work day: 5:00AM to 7:00PM
+// Blue vertical line through today's column showing time progress
+// Injected into each today cell — safe approach that doesn't break layout
 var TIME_LINE_START_HOUR = 5;
 var TIME_LINE_END_HOUR   = 19;
 
 function updateTimeLine() {
-  // Remove existing line
-  var existing = document.getElementById('today-time-line');
-  if (existing) existing.parentNode.removeChild(existing);
+  // Remove any existing lines
+  document.querySelectorAll('#today-time-line').forEach(function(el) {
+    el.parentNode.removeChild(el);
+  });
 
-  // Find the grid scroll container and today column header
-  var gridScroll = document.getElementById('grid-scroll');
-  var calInner   = document.getElementById('cal-inner');
-  if (!gridScroll || !calInner) return;
-
-  // Find a today cell to get its horizontal position
-  var todayCell = document.querySelector('.day-header-cell.today-col');
-  if (!todayCell) return;
-
-  // Get positions relative to cal-inner
-  var innerRect  = calInner.getBoundingClientRect();
-  var cellRect   = todayCell.getBoundingClientRect();
+  // Only show if today is visible
+  var todayCells = document.querySelectorAll('.day-cell.today-col');
+  if (!todayCells.length) return;
 
   // Calculate time progress
   var now  = new Date();
@@ -3267,17 +3202,48 @@ function updateTimeLine() {
   var span = TIME_LINE_END_HOUR - TIME_LINE_START_HOUR;
   var pct  = Math.min(1, Math.max(0, (hrs - TIME_LINE_START_HOUR) / span));
 
-  // Position: centre of today column + progress offset within cell width
-  var cellWidth   = cellRect.width;
-  var leftOffset  = (cellRect.left - innerRect.left) + (pct * cellWidth);
+  // Add a line to each today cell (one per row)
+  todayCells.forEach(function(cell) {
+    var line = document.createElement('div');
+    line.id  = 'today-time-line';
+    line.style.cssText = [
+      'position:absolute',
+      'top:0',
+      'bottom:0',
+      'width:3px',
+      'left:' + Math.round(pct * 100) + '%',
+      'background:#2176AE',
+      'box-shadow:0 0 8px rgba(33,118,174,0.8)',
+      'pointer-events:none',
+      'z-index:50',
+      'border-radius:2px'
+    ].join(';');
+    // Ensure cell is relative positioned
+    var existing = window.getComputedStyle(cell).position;
+    if (existing === 'static') cell.style.position = 'relative';
+    cell.appendChild(line);
+  });
 
-  // Create the line
-  var line = document.createElement('div');
-  line.id = 'today-time-line';
-  line.style.left = Math.round(leftOffset) + 'px';
-
-  calInner.style.position = 'relative';
-  calInner.appendChild(line);
+  // Also add to header today cell for full column effect
+  var headerCell = document.querySelector('.day-header-cell.today-col');
+  if (headerCell) {
+    var hline = document.createElement('div');
+    hline.id  = 'today-time-line';
+    hline.style.cssText = [
+      'position:absolute',
+      'top:0',
+      'bottom:0',
+      'width:3px',
+      'left:' + Math.round(pct * 100) + '%',
+      'background:rgba(255,255,255,0.6)',
+      'pointer-events:none',
+      'z-index:50',
+      'border-radius:2px'
+    ].join(';');
+    var hexisting = window.getComputedStyle(headerCell).position;
+    if (hexisting === 'static') headerCell.style.position = 'relative';
+    headerCell.appendChild(hline);
+  }
 }
 
 updateTimeLine();
