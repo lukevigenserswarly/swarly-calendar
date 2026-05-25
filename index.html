@@ -2587,25 +2587,9 @@ function renderReviewCards() {
       "</div></div>";
     (function(idx) {
       var btn = card.querySelector(".btn-send-this");
-      // Build the mailto URL now and set it directly on the anchor
-      // so the user clicking it is a real native link click — no JS in between
-      var email    = reviewEmails[idx];
-      var subject  = document.getElementById('review-subject-' + idx) 
-                     ? document.getElementById('review-subject-' + idx).value.trim()
-                     : (email.subject || '');
-      var bodyText = document.getElementById('review-body-' + idx)
-                     ? document.getElementById('review-body-' + idx).value.trim()
-                     : (email.body || '');
-      var s = loadSettings();
-      var params = [];
-      if (s && s.email) params.push('cc=' + encodeURIComponent(s.email));
-      params.push('subject=' + encodeURIComponent(subject));
-      params.push('body=' + encodeURIComponent(bodyText));
-      var mailtoUrl = 'mailto:' + encodeURIComponent(email.contractor.email) + '?' + params.join('&');
-      btn.href   = mailtoUrl;
       btn.target = '_blank';
       btn.rel    = 'noopener';
-      // When clicked, mark as sent
+      // href gets set by updateMailtoLinks() after render
       btn.addEventListener("click", function() {
         if (reviewEmails[idx].status === 'sent') return;
         reviewEmails[idx].status = 'sent';
