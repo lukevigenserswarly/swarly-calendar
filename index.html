@@ -2137,9 +2137,12 @@ function renderConfirmationSection(job, savedOrder) {
     row.className = "confirm-row";
     row.innerHTML =
       `<div class="confirm-row-label">${esc(item.label)}<span class="confirm-row-sub">${esc(item.sub)}</span></div>` +
+      `<div style="display:flex;gap:6px;align-items:center;">` +
       `<button class="confirm-toggle-btn ${isConfirmed ? "confirmed" : "unconfirmed"}" data-key="${item.key}">` +
       `${isConfirmed ? "✓ Confirmed" : "Mark Confirmed"}` +
-      `</button>`;
+      `</button>` +
+      `<button class="confirm-remove-btn" data-key="${item.key}" title="Remove this contractor" style="padding:5px 10px;font-size:11px;font-weight:700;border:1.5px solid #E2B4B4;background:#FFF5F5;color:#C0392B;border-radius:7px;cursor:pointer;">Remove</button>` +
+      `</div>`;
 
     row.querySelector(".confirm-toggle-btn").addEventListener("click", () => {
       const orders = loadOrders();
@@ -2148,11 +2151,31 @@ function renderConfirmationSection(job, savedOrder) {
       if (!ord.confirmations) ord.confirmations = {};
       ord.confirmations[item.key] = !ord.confirmations[item.key];
       saveOrders(orders);
-      // Re-render section
       renderConfirmationSection(job, ord);
-      // Refresh pill indicator
       render();
       showToast(ord.confirmations[item.key] ? esc(item.label) + " confirmed ✓" : esc(item.label) + " unconfirmed");
+    });
+
+    row.querySelector(".confirm-remove-btn").addEventListener("click", () => {
+      if (!confirm("Remove " + item.label + " from this order?")) return;
+      const orders = loadOrders();
+      const ord = orders[job.id];
+      if (!ord) return;
+      // Remove the contractor booking for this key
+      const keyParts = item.key.split("_");
+      const type = keyParts[0];
+      if (type === "trucks" && ord.trucks) {
+        const idx = parseInt(keyParts[1]);
+        if (ord.trucks[idx]) ord.trucks[idx] = null;
+      } else if (ord[type]) {
+        ord[type] = null;
+      }
+      // Clear confirmation
+      if (ord.confirmations) delete ord.confirmations[item.key];
+      saveOrders(orders);
+      renderConfirmationSection(job, ord);
+      render();
+      showToast(item.label + " removed from order");
     });
 
     rowsEl.appendChild(row);
