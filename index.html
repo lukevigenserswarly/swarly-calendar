@@ -468,8 +468,8 @@
   <div class="header-divider"></div>
   <span class="brand-sub">Job Calendar</span>
   <div class="hspacer"></div>
-  <div id="gcal-sync-status" style="font-size:11px;font-weight:600;color:#2176AE;display:flex;align-items:center;gap:5px;">
-    <span id="gcal-sync-dot" style="width:7px;height:7px;border-radius:50%;background:#C8DCF0;display:inline-block;"></span>
+  <div id="gcal-sync-status" title="Double-click to force sync" ondblclick="syncGoogleCalendar()" style="font-size:11px;font-weight:600;color:#2176AE;display:flex;align-items:center;gap:5px;cursor:pointer;">
+    <span id="gcal-sync-dot" style="width:8px;height:8px;border-radius:50%;background:#C8DCF0;display:inline-block;flex-shrink:0;"></span>
     <span id="gcal-sync-label">Connecting...</span>
   </div>
   <div id="email-indicator"><span class="spin">&#8635;</span> Sending email&hellip;</div>
@@ -2605,34 +2605,29 @@ function updateReviewProgress() {
 }
 
 function sendSingleEmail(idx) {
-  const email = reviewEmails[idx];
+  var email   = reviewEmails[idx];
   if (email.status === 'sent') return;
-  const subject  = document.getElementById('review-subject-' + idx).value.trim();
-  const bodyText = document.getElementById('review-body-'    + idx).value.trim();
-  const statusEl = document.getElementById('review-status-' + idx);
-  const sendBtn  = document.getElementById('btn-send-'      + idx);
-
-  sendBtn.disabled = true;
+  var subject  = document.getElementById('review-subject-' + idx).value.trim();
+  var bodyText = document.getElementById('review-body-'    + idx).value.trim();
+  var statusEl = document.getElementById('review-status-' + idx);
+  var sendBtn  = document.getElementById('btn-send-'      + idx);
+  sendBtn.disabled     = true;
   statusEl.className   = 'review-status sending';
   statusEl.textContent = 'Opening...';
-
-  // Open in user's default email client (Outlook etc)
   sendViaOutlook({ to: email.contractor.email, subject: subject, body: bodyText });
-
-  // Mark as sent — user clicked, email client opened
   reviewEmails[idx].status = 'sent';
   statusEl.className   = 'review-status sent';
   statusEl.textContent = 'Opened in Outlook';
   sendBtn.className    = 'btn-send-this sent';
   sendBtn.textContent  = 'Sent';
   sendBtn.disabled     = true;
-
   updateReviewProgress();
 }
 
 document.getElementById('btn-send-all').addEventListener('click', function() {
-  const pending = reviewEmails.map(function(e,i) { return i; }).filter(function(i) { return reviewEmails[i].status !== 'sent'; });
-  pending.forEach(function(i) { sendSingleEmail(i); });
+  reviewEmails.map(function(e,i){return i;})
+    .filter(function(i){return reviewEmails[i].status !== 'sent';})
+    .forEach(function(i){ sendSingleEmail(i); });
 });
 document.getElementById("review-close-btn").addEventListener("click",  closeReviewModal);
 document.getElementById("review-cancel-btn").addEventListener("click", closeReviewModal);
@@ -2642,8 +2637,7 @@ document.getElementById("review-overlay").addEventListener("click", function(e) 
 
 // --- OUTLOOK SEND ---
 function sendViaOutlook({ to, subject, body }) {
-  // Use a hidden anchor click — works in popup-blocked environments
-  const s = loadSettings();
+  var s = loadSettings();
   var params = [];
   if (s && s.email) params.push('cc=' + encodeURIComponent(s.email));
   params.push('subject=' + encodeURIComponent(subject));
@@ -2651,10 +2645,9 @@ function sendViaOutlook({ to, subject, body }) {
   var mailtoUrl = 'mailto:' + encodeURIComponent(to) + '?' + params.join('&');
   var a = document.createElement('a');
   a.href = mailtoUrl;
-  a.style.display = 'none';
   document.body.appendChild(a);
   a.click();
-  setTimeout(function() { document.body.removeChild(a); }, 1000);
+  setTimeout(function() { document.body.removeChild(a); }, 500);
   return true;
 }
 // ─── EMAIL BUILDERS ───────────────────────────────────────────────────────────
@@ -3003,87 +2996,66 @@ render();
 
 
 // ─── GOOGLE CALENDAR SYNC ────────────────────────────────────────────────────
-// Fetches live events from the Apps Script web app endpoint
-// and merges them into the jobs array every 30 minutes.
-// Manual jobs (no gcal:true flag) are preserved in localStorage.
-
-const GCAL_SYNC_INTERVAL = 30 * 60 * 1000; // 30 minutes
-let gcalSyncTimer = null;
+var GCAL_SCRIPT_URL =  + SYNC_URL + ;
+var GCAL_SYNC_INTERVAL = 30 * 60 * 1000; // 30 minutes
 
 function setSyncStatus(status, message) {
-  const dot   = document.getElementById('gcal-sync-dot');
-  const label = document.getElementById('gcal-sync-label');
+  var dot   = document.getElementById('gcal-sync-dot');
+  var label = document.getElementById('gcal-sync-label');
   if (!dot || !label) return;
-  const colours = { connecting: '#C8DCF0', syncing: '#F0A500', ok: '#2E8B57', error: '#C0392B' };
-  dot.style.background   = colours[status] || colours.connecting;
-  label.textContent      = message;
+  var colours = { connecting: '#C8DCF0', syncing: '#F0A500', ok: '#2E8B57', error: '#C0392B' };
+  dot.style.background = colours[status] || colours.connecting;
+  label.textContent    = message;
+}
+
+function applyGcalEvents(data) {
+  var gcalEvents = (data && data.events) || [];
+  jobs = jobs.filter(function(j) { return !j.gcal; });
+  gcalEvents.forEach(function(ev) {
+    if (!jobs.find(function(j) { return j.id === ev.id; })) {
+      jobs.push(ev);
+    }
+  });
+  saveJobs();
+  render();
+  var time = new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+  setSyncStatus('ok', 'Synced ' + time);
+  console.log('GCal: ' + gcalEvents.length + ' events at ' + time);
 }
 
 function syncGoogleCalendar() {
   setSyncStatus('syncing', 'Syncing...');
 
-  // Use JSONP to bypass CORS — works from GitHub Pages to Google Apps Script
-  const SCRIPT_BASE = 'https://script.google.com/macros/s/AKfycbx2jPexbzpgJltSUCltu8x9oVJVHYkc23UhOYfTbAhDqF7BT2vYP9FsZ8kwGH8h/exec';
-  const callbackName = 'gcalCallback_' + Date.now();
-
-  // Set a timeout in case the script never loads
-  const timeout = setTimeout(function() {
-    setSyncStatus('error', 'Sync failed');
-    delete window[callbackName];
+  var cbName = 'gcalCB_' + Date.now();
+  var script  = document.createElement('script');
+  var timer   = setTimeout(function() {
+    setSyncStatus('error', 'Sync timed out');
+    delete window[cbName];
     if (script.parentNode) script.parentNode.removeChild(script);
-  }, 15000);
+  }, 20000);
 
-  // Define the callback function
-  window[callbackName] = function(data) {
-    clearTimeout(timeout);
-    delete window[callbackName];
+  window[cbName] = function(data) {
+    clearTimeout(timer);
+    delete window[cbName];
     if (script.parentNode) script.parentNode.removeChild(script);
-
-    try {
-      const gcalEvents = (data && data.events) || [];
-
-      // Remove all previous gcal jobs
-      jobs = jobs.filter(function(j) { return !j.gcal; });
-
-      // Add fresh gcal events
-      gcalEvents.forEach(function(ev) {
-        if (!jobs.find(function(j) { return j.id === ev.id; })) {
-          jobs.push(ev);
-        }
-      });
-
-      saveJobs();
-      render();
-
-      const time = new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
-      setSyncStatus('ok', 'Synced ' + time);
-      console.log('GCal sync: ' + gcalEvents.length + ' events at ' + time);
-    } catch(err) {
-      setSyncStatus('error', 'Sync failed');
-      console.error('GCal sync error:', err);
-    }
+    try { applyGcalEvents(data); }
+    catch(e) { setSyncStatus('error', 'Sync error'); console.error(e); }
   };
 
-  // Inject script tag to trigger JSONP request
-  var script = document.createElement('script');
-  script.src = SCRIPT_BASE + '?action=getEvents&callback=' + callbackName;
   script.onerror = function() {
-    clearTimeout(timeout);
+    clearTimeout(timer);
     setSyncStatus('error', 'Sync failed');
-    delete window[callbackName];
+    delete window[cbName];
   };
+
+  script.src = GCAL_SCRIPT_URL + '?action=getEvents&callback=' + cbName;
   document.head.appendChild(script);
 }
 
-// Kick off sync on load, then repeat every 30 minutes
+// Start sync on load
 syncGoogleCalendar();
-gcalSyncTimer = setInterval(syncGoogleCalendar, GCAL_SYNC_INTERVAL);
+setInterval(syncGoogleCalendar, GCAL_SYNC_INTERVAL);
 
-// Manual refresh button — double-click the sync status area
-document.getElementById('gcal-sync-status').addEventListener('dblclick', function() {
-  syncGoogleCalendar();
-});
-document.getElementById('gcal-sync-status').title = 'Double-click to force sync';
 
 </script>
 </body>
