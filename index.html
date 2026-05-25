@@ -1413,8 +1413,9 @@ function dateDiffDays(a, b) {
 
 // ─── TOOLTIP ─────────────────────────────────────────────────────────────────
 const tooltip = document.getElementById("job-tooltip");
-let ttHideTimer = null;
-let ttActive    = false;
+let ttHideTimer  = null;
+let ttShowTimer  = null;
+let ttActive     = false;
 
 // Reset tooltip fully - called at start of every render()
 function resetTooltip() {
