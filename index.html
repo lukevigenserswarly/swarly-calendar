@@ -1632,13 +1632,11 @@ Use the Gmail create_draft tool then nothing else — actually no, use send capa
 
 // ─── NAVIGATION ──────────────────────────────────────────────────────────────
 document.getElementById("btn-prev").addEventListener("click", () => {
-  const step = view === "1 Week" ? 7 : view === "2 Weeks" ? 14 : 28;
-  anchor = addDays(anchor, -step);
+  anchor = addDays(anchor, -2);
   render();
 });
 document.getElementById("btn-next").addEventListener("click", () => {
-  const step = view === "1 Week" ? 7 : view === "2 Weeks" ? 14 : 28;
-  anchor = addDays(anchor, step);
+  anchor = addDays(anchor, 2);
   render();
 });
 document.getElementById("btn-today").addEventListener("click", () => {
