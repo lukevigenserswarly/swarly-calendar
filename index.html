@@ -2252,6 +2252,8 @@ function renderConfirmationSection(job, savedOrder) {
       if (!ord) return;
       if (!ord.confirmations) ord.confirmations = {};
       ord.confirmations[item.key] = !ord.confirmations[item.key];
+      orders[job.id] = ord;
+      _sharedOrders = orders;
       saveOrders(orders);
       renderConfirmationSection(job, ord);
       render();
@@ -2291,6 +2293,8 @@ function renderConfirmationSection(job, savedOrder) {
 
       // Clear confirmation
       if (ord.confirmations) delete ord.confirmations[item.key];
+      orders[job.id] = ord;
+      _sharedOrders = orders;
       saveOrders(orders);
       renderConfirmationSection(job, ord);
       render();
