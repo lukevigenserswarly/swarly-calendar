@@ -349,6 +349,9 @@
   .asphalt-mix-row { display: grid; grid-template-columns: 1fr 100px 110px auto; gap: 8px; align-items: center; padding: 8px 10px; background: #F8FBFF; border: 1.5px solid #E2EEF8; border-radius: 8px; }
   .asphalt-mix-row input { padding: 7px 8px; border: 1.5px solid #DDE3EE; border-radius: 7px; font-size: 12px; font-family: inherit; color: #1A202C; background: #fff; width: 100%; }
   .asphalt-mix-row input:focus { outline: none; border-color: #2176AE; }
+  .asphalt-day-section { border: 1.5px solid #D0DDEF; border-radius: 10px; padding: 10px; margin-bottom: 10px; background: #F8FBFF; }
+  .asphalt-day-label { font-size: 11px; font-weight: 800; color: #2176AE; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .asphalt-day-total { font-size: 11px; color: #6B7A99; font-weight: 600; margin-top: 4px; }
   .asphalt-section-label { font-size: 10px; font-weight: 800; color: #6B7A99; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; margin-top: 6px; display: block; }
   /* Plant mix type chips in contractor management */
   .mix-type-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
@@ -675,9 +678,8 @@
           </div>
 
           <span class="asphalt-section-label">Mix Orders</span>
-          <div style="font-size:10px;color:#8AAAC0;margin-bottom:6px;margin-top:-2px;">Select mix type, tonnage and load-out time. Add a row for each mix needed.</div>
-          <div id="asphalt-mix-rows"></div>
-          <button class="btn-add-row" id="btn-add-asphalt-mix" style="margin-top:4px;">+ Add Mix</button>
+          <div style="font-size:10px;color:#8AAAC0;margin-bottom:6px;margin-top:-2px;">Add mix type, tonnage and load-out time for each day.</div>
+          <div id="asphalt-days-container"></div>
 
           <div class="grid-2" style="margin-top:12px;">
             <div class="field"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Site Contact</label>
@@ -2116,14 +2118,9 @@ function openOrderModal(jobRef) {
     document.getElementById("asphalt-phone").value   = (saved.asphalt && saved.asphalt.phone)   || _savedContact.phone || "";
     if (saved.asphalt && saved.asphalt.contractorIdx != null)
       document.getElementById("asphalt-contractor").value = saved.asphalt.contractorIdx;
-    const amixRows = document.getElementById("asphalt-mix-rows");
-    amixRows.innerHTML = "";
+    // Build day-grouped asphalt sections
     asphaltMixRowCount = 0;
-    if (saved.asphalt && saved.asphalt.mixes && saved.asphalt.mixes.length) {
-      saved.asphalt.mixes.forEach(r => addAsphaltMixRow(r.mix, r.tonnes, r.time));
-    } else {
-      addAsphaltMixRow();
-    }
+    buildAsphaltDaySections(job, saved.asphalt && saved.asphalt.mixes);
 
     document.getElementById("order-confirmed-badge").style.display = saved._confirmed ? "inline-block" : "none";
     document.getElementById("btn-clear-order").style.display = "inline-block";
@@ -2155,14 +2152,10 @@ function openOrderModal(jobRef) {
     const _crewContact = CREW_CONTACTS[job.row] || {};
     document.getElementById("asphalt-contact").value = _crewContact.name  || "";
     document.getElementById("asphalt-phone").value   = _crewContact.phone || "";
-    const _amixRows = document.getElementById("asphalt-mix-rows");
-    if (_amixRows) {
-      _amixRows.innerHTML = "";
-      asphaltMixRowCount = 0;
-      // Refresh plant dropdown before adding mix row
-      populateContractorDropdowns();
-      addAsphaltMixRow();
-    }
+    // Build fresh day sections for new order
+    asphaltMixRowCount = 0;
+    populateContractorDropdowns();
+    buildAsphaltDaySections(job, null);
 
     document.getElementById("order-confirmed-badge").style.display = "none";
     document.getElementById("btn-clear-order").style.display = "none";
@@ -2506,41 +2499,116 @@ function buildMixOptions(selected) {
 
 function addAsphaltMixRow(mix, tonnes, time) {
   // Add column headers if this is the first row
-  const container = document.getElementById("asphalt-mix-rows");
-  if (container && container.children.length === 0) {
+  const container = document.getElementById("amix-rows-" + dayIndex);
+  if (!container) return;
+
+  // Add column headers if first row
+  if (container.children.length === 0) {
     const hdr = document.createElement("div");
     hdr.style.cssText = "display:grid;grid-template-columns:1fr 100px 110px auto;gap:8px;padding:0 10px 4px;";
     hdr.innerHTML = ["Mix Type","Tonnes","Load-out Time",""].map(t =>
       `<span style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.05em;">${t}</span>`
     ).join("");
-    hdr.id = "amix-header";
     container.appendChild(hdr);
   }
+
   const rowId = "amix-row-" + (asphaltMixRowCount++);
   const div = document.createElement("div");
   div.className = "asphalt-mix-row";
+  div.dataset.day = dayIndex;
   div.id = rowId;
   div.innerHTML =
-    `<input class="amix-type" type="text" placeholder="e.g. AC14 C320, Type 3 Multigrade" value="${mix || ""}" />` +
+    `<input class="amix-type" type="text" placeholder="e.g. AC14 C320" value="${mix || ""}" />` +
     `<input class="amix-tonnes" type="number" min="0" step="0.5" placeholder="Tonnes" value="${tonnes || ""}" />` +
     `<input class="amix-time" type="time" value="${time || ""}" title="Load-out time" />` +
     `<button class="btn-remove-row" title="Remove">×</button>`;
-  div.querySelector(".btn-remove-row").addEventListener("click", () => { div.remove(); updateOrderSummary(); });
-  div.querySelector(".amix-type").addEventListener("input", updateOrderSummary);
-  div.querySelector(".amix-tonnes").addEventListener("input", updateOrderSummary);
-  document.getElementById("asphalt-mix-rows").appendChild(div);
+  div.querySelector(".btn-remove-row").addEventListener("click", () => { div.remove(); updateDayTotal(dayIndex); updateOrderSummary(); });
+  div.querySelector(".amix-type").addEventListener("input", () => { updateDayTotal(dayIndex); updateOrderSummary(); });
+  div.querySelector(".amix-tonnes").addEventListener("input", () => { updateDayTotal(dayIndex); updateOrderSummary(); });
+  container.appendChild(div);
+  updateDayTotal(dayIndex);
   updateOrderSummary();
 }
 
-function getAsphaltMixRows() {
-  return [...document.querySelectorAll(".asphalt-mix-row")].map(r => ({
-    mix:    r.querySelector(".amix-type").value,
-    tonnes: r.querySelector(".amix-tonnes").value,
-    time:   r.querySelector(".amix-time").value,
-  })).filter(r => r.mix || r.tonnes);
+function updateDayTotal(dayIndex) {
+  const container = document.getElementById("amix-rows-" + dayIndex);
+  const totalEl   = document.getElementById("amix-total-" + dayIndex);
+  if (!container || !totalEl) return;
+  const total = [...container.querySelectorAll(".amix-tonnes")]
+    .reduce((s, el) => s + (parseFloat(el.value) || 0), 0);
+  totalEl.textContent = total > 0 ? "Day total: " + total + "T" : "";
 }
 
-document.getElementById("btn-add-asphalt-mix").addEventListener("click", () => addAsphaltMixRow());
+function buildAsphaltDaySections(job, savedMixes) {
+  const container = document.getElementById("asphalt-days-container");
+  if (!container) return;
+  container.innerHTML = "";
+
+  // Get all dates for this job
+  const dates = [];
+  const start = new Date(job.startDate + "T12:00:00");
+  const end   = new Date((job.endDate || job.startDate) + "T12:00:00");
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    dates.push(new Date(d));
+  }
+
+  dates.forEach(function(date, idx) {
+    const dateKey = date.toISOString().slice(0,10);
+    const label   = date.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" });
+
+    const section = document.createElement("div");
+    section.className = "asphalt-day-section";
+    section.innerHTML =
+      `<div class="asphalt-day-label">${label}</div>` +
+      `<div id="amix-rows-${idx}"></div>` +
+      `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">` +
+        `<span class="asphalt-day-total" id="amix-total-${idx}"></span>` +
+        `<button class="btn-add-row" data-day="${idx}" style="margin:0;">+ Add Mix</button>` +
+      `</div>`;
+    container.appendChild(section);
+
+    section.querySelector(".btn-add-row").addEventListener("click", function() {
+      addAsphaltMixRow(idx, "", "", "");
+    });
+
+    // Load saved mixes for this date
+    const saved = savedMixes ? (savedMixes[dateKey] || []) : [];
+    if (saved.length > 0) {
+      saved.forEach(function(r) { addAsphaltMixRow(idx, r.mix, r.tonnes, r.time); });
+    } else {
+      addAsphaltMixRow(idx, "", "", ""); // start with one empty row
+    }
+  });
+}
+
+function getAsphaltMixRows() {
+  // Returns mixes grouped by date key
+  const container = document.getElementById("asphalt-days-container");
+  if (!container) return {};
+  const result = {};
+  container.querySelectorAll(".asphalt-day-section").forEach(function(section, idx) {
+    const label = section.querySelector(".asphalt-day-label").textContent;
+    // Get date from currentOrderJob
+    const job   = currentOrderJob;
+    const start = new Date(job.startDate + "T12:00:00");
+    const d     = new Date(start);
+    d.setDate(d.getDate() + idx);
+    const dateKey = d.toISOString().slice(0,10);
+    const rows = [...section.querySelectorAll(".asphalt-mix-row")].map(function(r) {
+      return {
+        mix:    r.querySelector(".amix-type").value,
+        tonnes: r.querySelector(".amix-tonnes").value,
+        time:   r.querySelector(".amix-time").value,
+        date:   dateKey,
+        label:  label
+      };
+    }).filter(function(r) { return r.mix || r.tonnes; });
+    if (rows.length > 0) result[dateKey] = rows;
+  });
+  return result;
+}
+
+// btn-add-asphalt-mix removed - each day section has its own add button
 
 // When plant changes, rebuild mix dropdowns
 document.getElementById("asphalt-contractor").addEventListener("change", () => {
@@ -3001,30 +3069,54 @@ function buildTCEmail(job, contractor, tc) {
 }
 
 function buildAsphaltEmail(job, contractor, asphalt) {
-  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
-  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  const mixes = asphalt.mixes || [];
-  const totalT = mixes.reduce((s, r) => s + (parseFloat(r.tonnes) || 0), 0);
-  const lines = [];
+  const dur     = dateDiffDays(job.startDate, job.endDate) + 1;
+  const dateStr = buildDateRange(job);
+  const lines   = [];
   lines.push("Asphalt Order");
   lines.push("");
   lines.push("Date:        " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
   lines.push("Location:    " + (job.location || "TBA"));
   if (job.jobRef) lines.push("Job Ref:     " + job.jobRef);
   lines.push("");
-  lines.push("Mix Order:");
-  if (mixes.length > 0) {
+
+  // mixes is now grouped by date key { "2026-06-02": [...], "2026-06-03": [...] }
+  const mixesByDate = asphalt.mixes || {};
+  var grandTotal = 0;
+
+  if (typeof mixesByDate === "object" && !Array.isArray(mixesByDate)) {
+    // New grouped format
+    const dateKeys = Object.keys(mixesByDate).sort();
+    if (dateKeys.length > 0) {
+      dateKeys.forEach(function(dateKey) {
+        const dayRows = mixesByDate[dateKey];
+        if (!dayRows || dayRows.length === 0) return;
+        const dayLabel = new Date(dateKey + "T12:00:00").toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" });
+        const dayTotal = dayRows.reduce(function(s, r) { return s + (parseFloat(r.tonnes) || 0); }, 0);
+        grandTotal += dayTotal;
+        lines.push(dayLabel + (dayTotal > 0 ? "  (" + dayTotal + "T)" : "") + ":");
+        dayRows.forEach(function(r) {
+          const timePart = r.time ? "   Load-out: " + r.time : "";
+          lines.push("  - " + (r.mix || "TBA") + (r.tonnes ? "   " + r.tonnes + "T" : "") + timePart);
+        });
+        lines.push("");
+      });
+      if (grandTotal > 0) lines.push("Total Order:  " + grandTotal + "T");
+    } else {
+      lines.push("Mix Order:  TBA");
+    }
+  } else {
+    // Legacy flat array format
+    const mixes  = Array.isArray(mixesByDate) ? mixesByDate : [];
+    const totalT = mixes.reduce(function(s, r) { return s + (parseFloat(r.tonnes) || 0); }, 0);
+    grandTotal = totalT;
+    lines.push("Mix Order:");
     mixes.forEach(function(r) {
       const timePart = r.time ? "   Load-out: " + r.time : "";
       lines.push("  - " + (r.mix || "TBA") + (r.tonnes ? "   " + r.tonnes + "T" : "") + timePart);
     });
-    if (totalT > 0) {
-      lines.push("");
-      lines.push("  Total:  " + totalT + "T");
-    }
-  } else {
-    lines.push("  TBA");
+    if (totalT > 0) { lines.push(""); lines.push("  Total:  " + totalT + "T"); }
   }
+
   if (asphalt.contact || asphalt.phone) {
     lines.push("");
     lines.push("Site Contact:  " + [asphalt.contact, asphalt.phone].filter(Boolean).join("  |  "));
