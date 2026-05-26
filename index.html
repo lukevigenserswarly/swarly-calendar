@@ -2219,7 +2219,9 @@ function renderConfirmationSection(job, savedOrder) {
   if (savedOrder.asphalt && savedOrder.asphalt.enabled) {
     const co = (contractors.asphalt || [])[savedOrder.asphalt.contractorIdx];
     if (co) {
-      const mixes = (savedOrder.asphalt.mixes || []).map(r => r.mix + (r.tonnes ? " " + r.tonnes + "T" : "")).join(", ");
+      const _mixData = savedOrder.asphalt.mixes || {};
+      const _allMixes = Array.isArray(_mixData) ? _mixData : Object.values(_mixData).reduce((a,b) => a.concat(b), []);
+      const mixes = _allMixes.map(r => r.mix + (r.tonnes ? " " + r.tonnes + "T" : "")).join(", ");
       const sub = "Asphalt" + (mixes ? " · " + mixes : "");
       items.push({ key: "asphalt", label: co.name, sub: "Asphalt" + (sub ? " · " + sub : ""), type: "Asphalt" });
     }
@@ -2407,9 +2409,11 @@ function updateOrderSummary() {
     parts.push("🔬 Core Testing");
   }
   if (document.getElementById("toggle-asphalt").classList.contains("on")) {
-    const mixRows = getAsphaltMixRows();
-    const totalT  = mixRows.reduce((s, r) => s + (parseFloat(r.tonnes) || 0), 0);
-    const mixList = mixRows.map(r => r.mix + (r.tonnes ? " " + r.tonnes + "T" : "")).filter(Boolean).join(", ");
+    const mixesByDate = getAsphaltMixRows();
+    // Flatten grouped object into flat array for summary
+    const allMixRows = Object.values(mixesByDate).reduce((acc, arr) => acc.concat(arr), []);
+    const totalT  = allMixRows.reduce((s, r) => s + (parseFloat(r.tonnes) || 0), 0);
+    const mixList = allMixRows.map(r => r.mix + (r.tonnes ? " " + r.tonnes + "T" : "")).filter(Boolean).join(", ");
     parts.push("⚫ Asphalt" + (mixList ? " · " + mixList : "") + (totalT > 0 ? " (" + totalT + "T total)" : ""));
   }
   // Main summary
@@ -2497,7 +2501,7 @@ function buildMixOptions(selected) {
     mixes.map(m => `<option value="${esc(m)}" ${selected === m ? "selected" : ""}>${esc(m)}</option>`).join("");
 }
 
-function addAsphaltMixRow(mix, tonnes, time) {
+function addAsphaltMixRow(dayIndex, mix, tonnes, time) {
   // Add column headers if this is the first row
   const container = document.getElementById("amix-rows-" + dayIndex);
   if (!container) return;
@@ -2544,12 +2548,24 @@ function buildAsphaltDaySections(job, savedMixes) {
   if (!container) return;
   container.innerHTML = "";
 
+  // Safety check - ensure we have valid dates
+  if (!job || !job.startDate) {
+    addAsphaltMixRow(0, "", "", "");
+    return;
+  }
+
   // Get all dates for this job
   const dates = [];
-  const start = new Date(job.startDate + "T12:00:00");
-  const end   = new Date((job.endDate || job.startDate) + "T12:00:00");
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    dates.push(new Date(d));
+  try {
+    const start = new Date(job.startDate + "T12:00:00");
+    const end   = new Date((job.endDate || job.startDate) + "T12:00:00");
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      dates.push(new Date(d));
+      if (dates.length > 30) break; // safety limit
+    }
+  } catch(e) {
+    console.error("buildAsphaltDaySections date error:", e);
+    return;
   }
 
   dates.forEach(function(date, idx) {
@@ -2933,52 +2949,6 @@ function buildTCEmail(job, contractor, tc) {
   lines.push("Please ensure all traffic controllers are onsite and set up prior to works commencing. A current TMP will be required onsite at all times.");
   lines.push("");
   lines.push("Could you please confirm your availability and provide a quote if required?");
-  lines.push("");
-  lines.push("Please do not hesitate to contact me should you have any queries.");
-  lines.push("");
-
-  return lines.join("\n");
-}
-
-function buildAsphaltEmail(job, contractor, asphalt) {
-  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
-  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  const mixes = asphalt.mixes || [];
-  const totalT = mixes.reduce((s, r) => s + (parseFloat(r.tonnes) || 0), 0);
-  const lines = [];
-  lines.push("Hi " + (contractor.name || "there") + ",");
-  lines.push("");
-  lines.push("Hope you are well. Could I please make a booking for the following asphalt order:");
-  lines.push("");
-  lines.push("Date:              " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
-  lines.push("Location:          " + (job.location || "TBA"));
-  if (job.jobRef) lines.push("Job Ref:           " + job.jobRef);
-  lines.push("Client:            " + (job.title || "TBA"));
-  lines.push("");
-  lines.push("Mix Order:");
-  if (mixes.length > 0) {
-    mixes.forEach(function(r) {
-      const timePart = r.time ? "   Load-out: " + r.time : "";
-      lines.push("  • " + (r.mix || "TBA") + (r.tonnes ? "   " + r.tonnes + "T" : "") + timePart);
-    });
-    if (totalT > 0) lines.push("");
-    if (totalT > 0) lines.push("  Total:  " + totalT + "T");
-  } else {
-    lines.push("  TBA");
-  }
-  lines.push("");
-  if (asphalt.contact || asphalt.phone) {
-    lines.push("Site Contact:      " + [asphalt.contact, asphalt.phone].filter(Boolean).join("  |  "));
-    lines.push("");
-  }
-  if (asphalt.notes) {
-    lines.push("Notes:");
-    lines.push(asphalt.notes);
-    lines.push("");
-  }
-  lines.push("Please ensure all material is delivered to site on time and that drivers are briefed on site access requirements. Testing certificates will be required for all loads.");
-  lines.push("");
-  lines.push("Could you please confirm you can accommodate this order?");
   lines.push("");
   lines.push("Please do not hesitate to contact me should you have any queries.");
   lines.push("");
