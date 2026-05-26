@@ -2027,6 +2027,8 @@ function loadSharedDataAndInit() {
         if (local) _sharedContractors = { ...JSON.parse(JSON.stringify(DEFAULT_CONTRACTORS)), ...local };
       } catch(e) {}
     }
+    // Repopulate dropdowns now that contractors are loaded
+    if (typeof populateContractorDropdowns === 'function') populateContractorDropdowns();
   });
 
   // Load orders
