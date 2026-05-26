@@ -559,6 +559,10 @@
       <div class="settings-row"><label>Your email</label><input type="email" id="settings-email" placeholder="you@example.com" /></div>
       <div class="settings-row"><label>Your name</label><input type="text" id="settings-name" placeholder="e.g. Luke" /></div>
       <div id="email-sending-status"></div>
+      <div class="settings-section-title" style="margin-top:18px;">Contractors</div>
+      <div style="margin-bottom:16px;">
+        <button class="btn-primary" id="settings-manage-contractors-btn" style="width:100%;padding:10px;font-size:13px;">&#128101; Manage Contractors</button>
+      </div>
       <div id="settings-save-row">
         <button class="btn-secondary" id="settings-cancel-btn">Cancel</button>
         <button class="btn-primary" id="settings-save-btn">Save Settings</button>
@@ -3259,6 +3263,13 @@ document.getElementById("settings-close").addEventListener("click", closeSetting
 document.getElementById("settings-overlay").addEventListener("click", function(e) {
   if (e.target === document.getElementById("settings-overlay")) closeSettingsModal();
 });
+
+document.getElementById("settings-manage-contractors-btn").addEventListener("click", function() {
+  closeSettingsModal();
+  openContractorModal();
+});
+
+document.getElementById("settings-cancel-btn").addEventListener("click", closeSettingsModal);
 
 document.getElementById("settings-save-btn").addEventListener("click", function() {
   const s = loadSettings();
