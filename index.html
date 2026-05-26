@@ -352,6 +352,9 @@
   .asphalt-day-section { border: 1.5px solid #D0DDEF; border-radius: 10px; padding: 10px; margin-bottom: 10px; background: #F8FBFF; }
   .asphalt-day-label { font-size: 11px; font-weight: 800; color: #2176AE; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
   .asphalt-day-total { font-size: 11px; color: #6B7A99; font-weight: 600; margin-top: 4px; }
+  .day-breakdown-section { border: 1.5px solid #D0DDEF; border-radius: 10px; padding: 10px; margin-bottom: 8px; background: #F8FBFF; }
+  .day-breakdown-label { font-size: 11px; font-weight: 800; color: #2176AE; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .day-not-required { font-size: 11px; color: #8AAAC0; font-style: italic; }
   .asphalt-section-label { font-size: 10px; font-weight: 800; color: #6B7A99; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; margin-top: 6px; display: block; }
   /* Plant mix type chips in contractor management */
   .mix-type-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
@@ -602,8 +605,10 @@
           <button class="order-section-toggle" id="toggle-trucks"></button>
         </div>
         <div class="order-section-body" id="trucks-body">
-          <div id="truck-rows"></div>
-          <button class="btn-add-row" id="btn-add-truck-row">+ Add Contractor</button>
+          <div class="field" style="margin-bottom:8px;"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Select Contractor</label>
+            <select id="truck-contractor-global" style="width:100%;padding:7px 10px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;"></select>
+          </div>
+          <div id="truck-days-container"></div>
         </div>
       </div>
       <div class="order-section" id="section-profiler">
@@ -613,17 +618,11 @@
           <button class="order-section-toggle" id="toggle-profiler"></button>
         </div>
         <div class="order-section-body" id="profiler-body">
-          <div style="margin-bottom:8px;">
-            <div class="field" style="margin-bottom:8px;"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Select Contractor</label>
-              <select id="profiler-contractor" style="width:100%;padding:7px 10px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;"></select>
-            </div>
-            <div style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Profiler Size Required</div>
-            <div class="profiler-options">
-              <label class="profiler-chip" id="chip-1m"><input type="checkbox" id="profiler-1m" style="display:none;"> 1m Profiler</label>
-              <label class="profiler-chip" id="chip-2m"><input type="checkbox" id="profiler-2m" style="display:none;"> 2m Profiler</label>
-            </div>
+          <div class="field" style="margin-bottom:8px;"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Select Contractor</label>
+            <select id="profiler-contractor" style="width:100%;padding:7px 10px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;"></select>
           </div>
-          <div class="field"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Notes for Profiler Contractor</label>
+          <div id="profiler-days-container"></div>
+          <div class="field" style="margin-top:8px;"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Notes</label>
             <textarea id="profiler-notes" style="width:100%;padding:7px 10px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;resize:vertical;min-height:50px;" placeholder="e.g. depth, passes required&hellip;"></textarea>
           </div>
         </div>
@@ -635,14 +634,11 @@
           <button class="order-section-toggle" id="toggle-tc"></button>
         </div>
         <div class="order-section-body" id="tc-body">
-          <div class="tc-counts">
-            <div class="tc-count-field"><label>No. of TCs</label><input type="number" id="tc-count" min="0" placeholder="0" /></div>
-            <div class="tc-count-field"><label>No. of Utes</label><input type="number" id="tc-utes" min="0" placeholder="0" /></div>
-          </div>
-          <div class="field"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Select Contractor</label>
+          <div class="field" style="margin-bottom:8px;"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Select Contractor</label>
             <select id="tc-contractor" style="width:100%;padding:7px 10px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;"></select>
           </div>
-          <div class="field"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Notes for TC Contractor</label>
+          <div id="tc-days-container"></div>
+          <div class="field" style="margin-top:8px;"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Notes</label>
             <textarea id="tc-notes" style="width:100%;padding:7px 10px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;resize:vertical;min-height:50px;" placeholder="e.g. setup time, specific requirements&hellip;"></textarea>
           </div>
         </div>
@@ -2082,29 +2078,21 @@ function openOrderModal(jobRef) {
     });
 
     // Truck rows
-    const truckRowsEl = document.getElementById("truck-rows");
-    truckRowsEl.innerHTML = "";
-    truckRowCount = 0;
-    if (saved.trucks && saved.trucks.rows && saved.trucks.rows.length) {
-      saved.trucks.rows.forEach(r => addTruckRow(r.contractorIdx, r.truckType, r.qty));
-    } else {
-      addTruckRow();
-    }
+    // Build fresh day sections
+    // Build day sections with saved data
+    buildTruckDaySections(job, saved.trucks && saved.trucks.days);
+    buildProfilerDaySections(job, saved.profiler && saved.profiler.days);
+    buildTCDaySections(job, saved.tc && saved.tc.days);
 
-    // Profiler
-    const p1m = !!(saved.profiler && saved.profiler.size1m);
-    const p2m = !!(saved.profiler && saved.profiler.size2m);
-    document.getElementById("profiler-1m").checked = p1m;
-    document.getElementById("profiler-2m").checked = p2m;
-    document.getElementById("chip-1m").classList.toggle("selected", p1m);
-    document.getElementById("chip-2m").classList.toggle("selected", p2m);
+    // Restore global contractors
+    if (saved.trucks && saved.trucks.contractorIdx != null) {
+      const tg = document.getElementById("truck-contractor-global");
+      if (tg) tg.value = saved.trucks.contractorIdx;
+    }
     document.getElementById("profiler-notes").value = (saved.profiler && saved.profiler.notes) || "";
     if (saved.profiler && saved.profiler.contractorIdx != null)
       document.getElementById("profiler-contractor").value = saved.profiler.contractorIdx;
 
-    // TC
-    document.getElementById("tc-count").value = (saved.tc && saved.tc.count) || "";
-    document.getElementById("tc-utes").value  = (saved.tc && saved.tc.utes)  || "";
     document.getElementById("tc-notes").value = (saved.tc && saved.tc.notes) || "";
     if (saved.tc && saved.tc.contractorIdx != null)
       document.getElementById("tc-contractor").value = saved.tc.contractorIdx;
@@ -2132,19 +2120,11 @@ function openOrderModal(jobRef) {
       document.getElementById(s + "-body").classList.remove("open");
     });
 
-    const truckRowsEl = document.getElementById("truck-rows");
-    truckRowsEl.innerHTML = "";
-    truckRowCount = 0;
-    addTruckRow();
-
-    document.getElementById("profiler-1m").checked = false;
-    document.getElementById("profiler-2m").checked = false;
-    document.getElementById("chip-1m").classList.remove("selected");
-    document.getElementById("chip-2m").classList.remove("selected");
+    // Fresh day sections
+    buildTruckDaySections(job, null);
+    buildProfilerDaySections(job, null);
+    buildTCDaySections(job, null);
     document.getElementById("profiler-notes").value = "";
-
-    document.getElementById("tc-count").value = "";
-    document.getElementById("tc-utes").value  = "";
     document.getElementById("tc-notes").value = "";
     document.getElementById("core-notes").value = "";
     document.getElementById("asphalt-notes").value = "";
@@ -2419,7 +2399,12 @@ function updateOrderSummary() {
   }
   // Main summary
   const truckOn = document.getElementById("toggle-trucks").classList.contains("on");
-  const { typeGroups, totalTrucks, totalTonnage } = truckOn ? calcTruckTotals() : { typeGroups:{}, totalTrucks:0, totalTonnage:0 };
+  // For summary, flatten all day truck rows
+  const _truckDays = truckOn ? getTruckDayData() : {};
+  const _allTruckRows = Object.values(_truckDays).reduce((a,b) => a.concat(b), []);
+  const typeGroups = _allTruckRows.reduce((acc, r) => { if(r.truckType && r.qty) acc[r.truckType] = (acc[r.truckType]||0)+r.qty; return acc; }, {});
+  const totalTrucks = Object.values(typeGroups).reduce((s,q) => s+q, 0);
+  const totalTonnage = _allTruckRows.reduce((s,r) => s+(r.qty||0)*(TRUCK_TONNAGE[r.truckType]||0), 0);
 
   // Summary line (without tonnage — shown separately)
   const truckParts = [];
@@ -2544,6 +2529,178 @@ function updateDayTotal(dayIndex) {
   totalEl.textContent = total > 0 ? "Day total: " + total + "T" : "";
 }
 
+// ─── SHARED DAY DATES HELPER ─────────────────────────────────────────────────
+function getJobDates(job) {
+  const dates = [];
+  if (!job || !job.startDate) return dates;
+  try {
+    const start = new Date(job.startDate + "T12:00:00");
+    const end   = new Date((job.endDate || job.startDate) + "T12:00:00");
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      dates.push({ date: new Date(d), key: d.toISOString().slice(0,10),
+        label: d.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" }) });
+      if (dates.length > 30) break;
+    }
+  } catch(e) {}
+  return dates;
+}
+
+// ─── TRUCK DAY SECTIONS ───────────────────────────────────────────────────────
+function buildTruckDaySections(job, savedDays) {
+  const container = document.getElementById("truck-days-container");
+  if (!container) return;
+  container.innerHTML = "";
+  const dates = getJobDates(job);
+  if (dates.length === 0) return;
+
+  dates.forEach(function(d) {
+    const saved = savedDays && savedDays[d.key] ? savedDays[d.key] : [];
+    const section = document.createElement("div");
+    section.className = "day-breakdown-section";
+    section.dataset.datekey = d.key;
+    section.innerHTML =
+      `<div class="day-breakdown-label">${d.label}</div>` +
+      `<div class="truck-day-rows" id="truck-day-rows-${d.key}"></div>` +
+      `<button class="btn-add-row" data-datekey="${d.key}" style="margin-top:4px;">+ Add Truck Type</button>`;
+    container.appendChild(section);
+
+    section.querySelector(".btn-add-row").addEventListener("click", function() {
+      addTruckDayRow(d.key, "", 1);
+    });
+
+    if (saved.length > 0) {
+      saved.forEach(function(r) { addTruckDayRow(d.key, r.truckType, r.qty); });
+    } else {
+      addTruckDayRow(d.key, "", 1);
+    }
+  });
+}
+
+function addTruckDayRow(dateKey, truckType, qty) {
+  const container = document.getElementById("truck-day-rows-" + dateKey);
+  if (!container) return;
+  const div = document.createElement("div");
+  div.style.cssText = "display:grid;grid-template-columns:1fr 80px auto;gap:6px;align-items:center;margin-bottom:4px;";
+  div.innerHTML =
+    `<select class="truck-day-type" style="padding:6px 8px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;">` +
+    `<option value="">Select truck type</option>` +
+    Object.keys(TRUCK_TONNAGE).map(t => `<option value="${t}"${t === truckType ? " selected" : ""}>${t}</option>`).join("") +
+    `</select>` +
+    `<input class="truck-day-qty" type="number" min="1" value="${qty || 1}" placeholder="Qty" style="padding:6px 8px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;" />` +
+    `<button class="btn-remove-row" style="padding:4px 8px;">×</button>`;
+  div.querySelector(".btn-remove-row").addEventListener("click", function() { div.remove(); updateOrderSummary(); });
+  div.querySelector(".truck-day-type").addEventListener("change", updateOrderSummary);
+  div.querySelector(".truck-day-qty").addEventListener("input", updateOrderSummary);
+  container.appendChild(div);
+  updateOrderSummary();
+}
+
+function getTruckDayData() {
+  const result = {};
+  document.querySelectorAll(".day-breakdown-section[data-datekey]").forEach(function(section) {
+    const key = section.dataset.datekey;
+    if (!document.getElementById("truck-day-rows-" + key)) return;
+    const rows = [...section.querySelectorAll(".truck-day-rows > div")].map(function(row) {
+      return { truckType: row.querySelector(".truck-day-type").value, qty: parseInt(row.querySelector(".truck-day-qty").value) || 1 };
+    }).filter(function(r) { return r.truckType; });
+    if (rows.length > 0) result[key] = rows;
+  });
+  return result;
+}
+
+// ─── PROFILER DAY SECTIONS ────────────────────────────────────────────────────
+function buildProfilerDaySections(job, savedDays) {
+  const container = document.getElementById("profiler-days-container");
+  if (!container) return;
+  container.innerHTML = "";
+  const dates = getJobDates(job);
+  if (dates.length === 0) return;
+
+  dates.forEach(function(d) {
+    const saved = savedDays && savedDays[d.key] ? savedDays[d.key] : {};
+    const section = document.createElement("div");
+    section.className = "day-breakdown-section";
+    section.dataset.datekey = d.key;
+    const req1m = saved.size1m ? "checked" : "";
+    const req2m = saved.size2m ? "checked" : "";
+    const needed = saved.needed !== false;
+    section.innerHTML =
+      `<div class="day-breakdown-label">` +
+        `<input type="checkbox" class="profiler-day-needed" id="profiler-needed-${d.key}" ${needed ? "checked" : ""} />` +
+        `<label for="profiler-needed-${d.key}" style="cursor:pointer;">${d.label}</label>` +
+      `</div>` +
+      `<div class="profiler-day-options" id="profiler-opts-${d.key}" style="${needed ? "" : "display:none;"}">` +
+        `<div class="profiler-options" style="margin-top:4px;">` +
+          `<label class="profiler-chip${req1m ? " selected" : ""}" style="margin-right:6px;"><input type="checkbox" class="profiler-day-1m" ${req1m} style="display:none;"> 1m Profiler</label>` +
+          `<label class="profiler-chip${req2m ? " selected" : ""}"><input type="checkbox" class="profiler-day-2m" ${req2m} style="display:none;"> 2m Profiler</label>` +
+        `</div>` +
+      `</div>`;
+    container.appendChild(section);
+
+    // Toggle options visibility
+    section.querySelector(".profiler-day-needed").addEventListener("change", function() {
+      document.getElementById("profiler-opts-" + d.key).style.display = this.checked ? "" : "none";
+      updateOrderSummary();
+    });
+
+    // Chip toggle styling
+    section.querySelectorAll(".profiler-chip").forEach(function(chip) {
+      chip.addEventListener("click", function() {
+        const cb = chip.querySelector("input");
+        setTimeout(function() { chip.classList.toggle("selected", cb.checked); updateOrderSummary(); }, 0);
+      });
+    });
+  });
+}
+
+function getProfilerDayData() {
+  const result = {};
+  document.querySelectorAll("#profiler-days-container .day-breakdown-section").forEach(function(section) {
+    const key    = section.dataset.datekey;
+    const needed = section.querySelector(".profiler-day-needed").checked;
+    const size1m = needed && section.querySelector(".profiler-day-1m") && section.querySelector(".profiler-day-1m").checked;
+    const size2m = needed && section.querySelector(".profiler-day-2m") && section.querySelector(".profiler-day-2m").checked;
+    result[key]  = { needed: needed, size1m: !!size1m, size2m: !!size2m };
+  });
+  return result;
+}
+
+// ─── TC DAY SECTIONS ──────────────────────────────────────────────────────────
+function buildTCDaySections(job, savedDays) {
+  const container = document.getElementById("tc-days-container");
+  if (!container) return;
+  container.innerHTML = "";
+  const dates = getJobDates(job);
+  if (dates.length === 0) return;
+
+  dates.forEach(function(d) {
+    const saved = savedDays && savedDays[d.key] ? savedDays[d.key] : {};
+    const section = document.createElement("div");
+    section.className = "day-breakdown-section";
+    section.dataset.datekey = d.key;
+    section.innerHTML =
+      `<div class="day-breakdown-label">${d.label}</div>` +
+      `<div class="tc-counts" style="margin-top:4px;">` +
+        `<div class="tc-count-field"><label>No. of TCs</label><input type="number" class="tc-day-count" min="0" placeholder="0" value="${saved.count || ""}" /></div>` +
+        `<div class="tc-count-field"><label>No. of Utes</label><input type="number" class="tc-day-utes" min="0" placeholder="0" value="${saved.utes || ""}" /></div>` +
+      `</div>`;
+    container.appendChild(section);
+    section.querySelector(".tc-day-count").addEventListener("input", updateOrderSummary);
+    section.querySelector(".tc-day-utes").addEventListener("input", updateOrderSummary);
+  });
+}
+
+function getTCDayData() {
+  const result = {};
+  document.querySelectorAll("#tc-days-container .day-breakdown-section").forEach(function(section) {
+    const key   = section.dataset.datekey;
+    const count = section.querySelector(".tc-day-count").value;
+    const utes  = section.querySelector(".tc-day-utes").value;
+    if (count || utes) result[key] = { count: count, utes: utes };
+  });
+  return result;
+}
+
 function buildAsphaltDaySections(job, savedMixes) {
   const container = document.getElementById("asphalt-days-container");
   if (!container) return;
@@ -2657,9 +2814,17 @@ function gatherOrderEmails() {
   })).filter(r => r.qty > 0);
   const orderData = {
     _confirmed: true,
-    trucks: { enabled: document.getElementById("toggle-trucks").classList.contains("on"), rows: truckRows },
-    profiler: { enabled: document.getElementById("toggle-profiler").classList.contains("on"), contractorIdx: parseInt(document.getElementById("profiler-contractor").value)||0, size1m: document.getElementById("profiler-1m").checked, size2m: document.getElementById("profiler-2m").checked, notes: document.getElementById("profiler-notes").value.trim() },
-    tc: { enabled: document.getElementById("toggle-tc").classList.contains("on"), contractorIdx: parseInt(document.getElementById("tc-contractor").value)||0, count: document.getElementById("tc-count").value, utes: document.getElementById("tc-utes").value, notes: document.getElementById("tc-notes").value.trim() },
+    trucks:  { enabled: document.getElementById("toggle-trucks").classList.contains("on"),
+               contractorIdx: parseInt((document.getElementById("truck-contractor-global") || {}).value)||0,
+               days: getTruckDayData() },
+    profiler: { enabled: document.getElementById("toggle-profiler").classList.contains("on"),
+                contractorIdx: parseInt(document.getElementById("profiler-contractor").value)||0,
+                days: getProfilerDayData(),
+                notes: document.getElementById("profiler-notes").value.trim() },
+    tc:       { enabled: document.getElementById("toggle-tc").classList.contains("on"),
+                contractorIdx: parseInt(document.getElementById("tc-contractor").value)||0,
+                days: getTCDayData(),
+                notes: document.getElementById("tc-notes").value.trim() },
     core:    { enabled: document.getElementById("toggle-core").classList.contains("on"), contractorIdx: parseInt(document.getElementById("core-contractor").value)||0, notes: document.getElementById("core-notes").value.trim() },
     asphalt: { enabled: document.getElementById("toggle-asphalt").classList.contains("on"), contractorIdx: parseInt(document.getElementById("asphalt-contractor").value)||0, mixes: getAsphaltMixRows(), contact: document.getElementById("asphalt-contact").value.trim(), phone: document.getElementById("asphalt-phone").value.trim(), notes: document.getElementById("asphalt-notes").value.trim() },
   };
@@ -2672,13 +2837,9 @@ function gatherOrderEmails() {
   const freshOrder = loadOrders()[job.id];
   if (freshOrder) renderConfirmationSection(job, freshOrder);
   const emails = [];
-  if (orderData.trucks.enabled && truckRows.length) {
-    const grouped = {};
-    truckRows.forEach(r => { if (!grouped[r.contractorIdx]) grouped[r.contractorIdx]=0; grouped[r.contractorIdx]+=r.qty; });
-    Object.entries(grouped).forEach(([idx, qty]) => {
-      const co = contractors.trucks[parseInt(idx)];
-      if (co && co.email) emails.push({ type:"Trucking", contractor:co, subject:"Truck Booking Request - "+buildDateRange(job), body:buildTruckEmail(job,co,qty,truckRows.filter(r=>r.contractorIdx==parseInt(idx))) });
-    });
+  if (orderData.trucks.enabled) {
+    const co = contractors.trucks[orderData.trucks.contractorIdx];
+    if (co && co.email) emails.push({ type:"Trucking", contractor:co, subject:"Truck Booking Request - "+buildDateRange(job), body:buildTruckEmail(job,co,null,orderData.trucks.days) });
   }
   if (orderData.profiler.enabled) {
     const co = contractors.profiler[orderData.profiler.contractorIdx];
@@ -2966,14 +3127,8 @@ function buildDateRange(job) {
   return start + " - " + end;
 }
 
-function buildTruckEmail(job, contractor, qty, truckRows) {
-  truckRows = truckRows || [];
-  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
-  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  const truckBreakdown = Object.entries(
-    truckRows.reduce((acc, r) => { if(r.qty>0){acc[r.truckType]=(acc[r.truckType]||0)+r.qty;} return acc; }, {})
-  ).map(([t,q]) => "  - " + q + "x " + t + (q > 1 ? "s" : "")).join("\n");
-  const totalTonnage = truckRows.reduce((s,r)=>s+(r.qty||0)*(TRUCK_TONNAGE[r.truckType]||0),0);
+function buildTruckEmail(job, contractor, qty, truckDays) {
+  const dateStr = buildDateRange(job);
   const lines = [];
   lines.push("Cartage Booking Request");
   lines.push("");
@@ -2981,21 +3136,56 @@ function buildTruckEmail(job, contractor, qty, truckRows) {
   lines.push("Location:    " + (job.location || "TBA"));
   if (job.jobRef) lines.push("Job Ref:     " + job.jobRef);
   lines.push("");
-  lines.push("Trucks Required:");
-  lines.push(truckBreakdown);
-  lines.push("");
-  lines.push("Total Estimated Cartage:  " + totalTonnage + "T");
+
+  // truckDays can be old flat array or new day-grouped object
+  var grandTotal = 0;
+  if (truckDays && typeof truckDays === "object" && !Array.isArray(truckDays)) {
+    const dateKeys = Object.keys(truckDays).sort();
+    if (dateKeys.length > 1) {
+      // Multi-day breakdown
+      dateKeys.forEach(function(dateKey) {
+        const dayRows = truckDays[dateKey] || [];
+        if (dayRows.length === 0) return;
+        const dayLabel = new Date(dateKey + "T12:00:00").toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" });
+        const dayTonnage = dayRows.reduce((s,r)=>s+(r.qty||0)*(TRUCK_TONNAGE[r.truckType]||0),0);
+        grandTotal += dayTonnage;
+        const breakdown = Object.entries(dayRows.reduce((acc,r)=>{if(r.qty>0){acc[r.truckType]=(acc[r.truckType]||0)+r.qty;}return acc;},{}))
+          .map(([t,q])=>"  - "+q+"x "+t+(q>1?"s":"")).join("\n");
+        lines.push(dayLabel + (dayTonnage > 0 ? "  (~" + dayTonnage + "T)" : "") + ":");
+        lines.push(breakdown);
+        lines.push("");
+      });
+      lines.push("Total Estimated Cartage:  " + grandTotal + "T");
+    } else {
+      // Single day
+      const dayRows = Object.values(truckDays)[0] || [];
+      const breakdown = Object.entries(dayRows.reduce((acc,r)=>{if(r.qty>0){acc[r.truckType]=(acc[r.truckType]||0)+r.qty;}return acc;},{}))
+        .map(([t,q])=>"  - "+q+"x "+t+(q>1?"s":"")).join("\n");
+      grandTotal = dayRows.reduce((s,r)=>s+(r.qty||0)*(TRUCK_TONNAGE[r.truckType]||0),0);
+      lines.push("Trucks Required:");
+      lines.push(breakdown);
+      lines.push("");
+      lines.push("Total Estimated Cartage:  " + grandTotal + "T");
+    }
+  } else {
+    // Legacy flat array
+    const flat = Array.isArray(truckDays) ? truckDays : [];
+    const breakdown = Object.entries(flat.reduce((acc,r)=>{if(r.qty>0){acc[r.truckType]=(acc[r.truckType]||0)+r.qty;}return acc;},{}))
+      .map(([t,q])=>"  - "+q+"x "+t+(q>1?"s":"")).join("\n");
+    grandTotal = flat.reduce((s,r)=>s+(r.qty||0)*(TRUCK_TONNAGE[r.truckType]||0),0);
+    lines.push("Trucks Required:");
+    lines.push(breakdown);
+    lines.push("");
+    lines.push("Total Estimated Cartage:  " + grandTotal + "T");
+  }
+
   lines.push("");
   lines.push("Please confirm your availability.");
   return lines.join("\n");
 }
 
 function buildProfilerEmail(job, contractor, profiler) {
-  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
-  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  const sizeList = [profiler.size1m ? "1m" : "", profiler.size2m ? "2m" : ""].filter(Boolean);
-  const sizeCount = sizeList.length;
-  const sizeStr = sizeList.join(" and ");
+  const dateStr = buildDateRange(job);
   const lines = [];
   lines.push("Profiling Booking Request");
   lines.push("");
@@ -3003,8 +3193,31 @@ function buildProfilerEmail(job, contractor, profiler) {
   lines.push("Location:    " + (job.location || "TBA"));
   if (job.jobRef) lines.push("Job Ref:     " + job.jobRef);
   lines.push("");
-  lines.push("Equipment Required:");
-  lines.push("  - " + (sizeCount > 1 ? sizeCount + "x Profilers (" + sizeStr + ")" : (sizeStr ? sizeStr + " Profiler" : "Profiler TBA")));
+
+  // Per-day profiler breakdown
+  const days = profiler.days || {};
+  const dateKeys = Object.keys(days).sort();
+  if (dateKeys.length > 1) {
+    lines.push("Profiling Required:");
+    dateKeys.forEach(function(dateKey) {
+      const d = days[dateKey];
+      if (!d) return;
+      const dayLabel = new Date(dateKey + "T12:00:00").toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" });
+      if (!d.needed) {
+        lines.push("  " + dayLabel + ":  Not required");
+      } else {
+        const sizes = [d.size1m ? "1m" : "", d.size2m ? "2m" : ""].filter(Boolean).join(" and ");
+        lines.push("  " + dayLabel + ":  " + (sizes ? sizes + " Profiler" : "Required"));
+      }
+    });
+  } else {
+    // Single day or legacy
+    const sizeList = [profiler.size1m ? "1m" : "", profiler.size2m ? "2m" : ""].filter(Boolean);
+    const sizeStr  = sizeList.join(" and ");
+    lines.push("Equipment Required:");
+    lines.push("  - " + (sizeStr ? sizeStr + " Profiler" : "Profiler TBA"));
+  }
+
   if (profiler.notes) {
     lines.push("");
     lines.push(profiler.notes);
@@ -3015,12 +3228,7 @@ function buildProfilerEmail(job, contractor, profiler) {
 }
 
 function buildTCEmail(job, contractor, tc) {
-  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
-  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  const tcNum = parseInt(tc.count) || 0;
-  const uteNum = parseInt(tc.utes) || 0;
-  const tcStr = tcNum > 0 ? "  - " + tcNum + "x Traffic Controller" + (tcNum > 1 ? "s" : "") : "";
-  const uteStr = uteNum > 0 ? "  - " + uteNum + "x Ute" + (uteNum > 1 ? "s" : "") : "";
+  const dateStr = buildDateRange(job);
   const lines = [];
   lines.push("Traffic Control Booking Request");
   lines.push("");
@@ -3028,10 +3236,31 @@ function buildTCEmail(job, contractor, tc) {
   lines.push("Location:    " + (job.location || "TBA"));
   if (job.jobRef) lines.push("Job Ref:     " + job.jobRef);
   lines.push("");
-  lines.push("Traffic Control Required:");
-  if (tcStr) lines.push(tcStr);
-  if (uteStr) lines.push(uteStr);
-  if (!tcStr && !uteStr) lines.push("  - TBA");
+
+  const days = tc.days || {};
+  const dateKeys = Object.keys(days).sort();
+  if (dateKeys.length > 1) {
+    lines.push("Traffic Control Required:");
+    dateKeys.forEach(function(dateKey) {
+      const d = days[dateKey];
+      if (!d) return;
+      const dayLabel = new Date(dateKey + "T12:00:00").toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" });
+      const tcNum  = parseInt(d.count) || 0;
+      const uteNum = parseInt(d.utes) || 0;
+      const parts  = [];
+      if (tcNum > 0)  parts.push(tcNum + "x TC" + (tcNum > 1 ? "s" : ""));
+      if (uteNum > 0) parts.push(uteNum + "x Ute" + (uteNum > 1 ? "s" : ""));
+      lines.push("  " + dayLabel + ":  " + (parts.length ? parts.join(", ") : "Not required"));
+    });
+  } else {
+    const tcNum  = parseInt(tc.count) || 0;
+    const uteNum = parseInt(tc.utes)  || 0;
+    lines.push("Traffic Control Required:");
+    if (tcNum  > 0) lines.push("  - " + tcNum  + "x Traffic Controller" + (tcNum  > 1 ? "s" : ""));
+    if (uteNum > 0) lines.push("  - " + uteNum + "x Ute" + (uteNum > 1 ? "s" : ""));
+    if (!tcNum && !uteNum) lines.push("  - TBA");
+  }
+
   if (tc.notes) {
     lines.push("");
     lines.push(tc.notes);
