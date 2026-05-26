@@ -347,8 +347,8 @@
   .btn-add-row:hover { background: #EEF6FF; }
   /* Asphalt mix rows */
   .asphalt-mix-row { display: grid; grid-template-columns: 1fr 100px 110px auto; gap: 8px; align-items: center; padding: 8px 10px; background: #F8FBFF; border: 1.5px solid #E2EEF8; border-radius: 8px; }
-  .asphalt-mix-row select, .asphalt-mix-row input { padding: 7px 8px; border: 1.5px solid #DDE3EE; border-radius: 7px; font-size: 12px; font-family: inherit; color: #1A202C; background: #fff; width: 100%; }
-  .asphalt-mix-row select:focus, .asphalt-mix-row input:focus { outline: none; border-color: #2176AE; }
+  .asphalt-mix-row input { padding: 7px 8px; border: 1.5px solid #DDE3EE; border-radius: 7px; font-size: 12px; font-family: inherit; color: #1A202C; background: #fff; width: 100%; }
+  .asphalt-mix-row input:focus { outline: none; border-color: #2176AE; }
   .asphalt-section-label { font-size: 10px; font-weight: 800; color: #6B7A99; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; margin-top: 6px; display: block; }
   /* Plant mix type chips in contractor management */
   .mix-type-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
@@ -2521,12 +2521,12 @@ function addAsphaltMixRow(mix, tonnes, time) {
   div.className = "asphalt-mix-row";
   div.id = rowId;
   div.innerHTML =
-    `<select class="amix-type">${buildMixOptions(mix || "")}</select>` +
+    `<input class="amix-type" type="text" placeholder="e.g. AC14 C320, Type 3 Multigrade" value="${mix || ""}" />` +
     `<input class="amix-tonnes" type="number" min="0" step="0.5" placeholder="Tonnes" value="${tonnes || ""}" />` +
     `<input class="amix-time" type="time" value="${time || ""}" title="Load-out time" />` +
     `<button class="btn-remove-row" title="Remove">×</button>`;
   div.querySelector(".btn-remove-row").addEventListener("click", () => { div.remove(); updateOrderSummary(); });
-  div.querySelector(".amix-type").addEventListener("change", updateOrderSummary);
+  div.querySelector(".amix-type").addEventListener("input", updateOrderSummary);
   div.querySelector(".amix-tonnes").addEventListener("input", updateOrderSummary);
   document.getElementById("asphalt-mix-rows").appendChild(div);
   updateOrderSummary();
