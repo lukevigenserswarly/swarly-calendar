@@ -3238,6 +3238,41 @@ document.getElementById("btn-manage-contractors").addEventListener("click", () =
   openContractorModal();
 });
 
+// ─── SETTINGS MODAL ──────────────────────────────────────────────────────────
+function openSettingsModal() {
+  const s = loadSettings();
+  const emailEl = document.getElementById("settings-email");
+  const notifyNew  = document.getElementById("settings-notify-new");
+  const notifyEdit = document.getElementById("settings-notify-edit");
+  if (emailEl)     emailEl.value = s.email || "";
+  if (notifyNew)   notifyNew.checked  = s.notifyNew  !== false;
+  if (notifyEdit)  notifyEdit.checked = s.notifyEdit !== false;
+  document.getElementById("settings-overlay").classList.add("open");
+}
+
+function closeSettingsModal() {
+  document.getElementById("settings-overlay").classList.remove("open");
+}
+
+document.getElementById("btn-settings").addEventListener("click", openSettingsModal);
+document.getElementById("settings-close").addEventListener("click", closeSettingsModal);
+document.getElementById("settings-overlay").addEventListener("click", function(e) {
+  if (e.target === document.getElementById("settings-overlay")) closeSettingsModal();
+});
+
+document.getElementById("settings-save-btn").addEventListener("click", function() {
+  const s = loadSettings();
+  const emailEl = document.getElementById("settings-email");
+  const notifyNew  = document.getElementById("settings-notify-new");
+  const notifyEdit = document.getElementById("settings-notify-edit");
+  if (emailEl)    s.email      = emailEl.value.trim();
+  if (notifyNew)  s.notifyNew  = notifyNew.checked;
+  if (notifyEdit) s.notifyEdit = notifyEdit.checked;
+  saveSettings(s);
+  closeSettingsModal();
+  showToast("Settings saved ✓");
+});
+
 document.getElementById("btn-clear-order").addEventListener("click", () => {
   if (!currentOrderJob) return;
   if (!confirm("Clear the saved order for this job and start fresh?")) return;
