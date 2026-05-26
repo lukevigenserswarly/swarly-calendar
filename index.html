@@ -2411,7 +2411,8 @@ function updateOrderSummary() {
   if (document.getElementById("toggle-asphalt").classList.contains("on")) {
     const mixesByDate = getAsphaltMixRows();
     // Flatten grouped object into flat array for summary
-    const allMixRows = Object.values(mixesByDate).reduce((acc, arr) => acc.concat(arr), []);
+    const _mixVal = (mixesByDate && typeof mixesByDate === "object" && !Array.isArray(mixesByDate)) ? mixesByDate : {};
+    const allMixRows = Object.values(_mixVal).reduce((acc, arr) => acc.concat(Array.isArray(arr) ? arr : []), []);
     const totalT  = allMixRows.reduce((s, r) => s + (parseFloat(r.tonnes) || 0), 0);
     const mixList = allMixRows.map(r => r.mix + (r.tonnes ? " " + r.tonnes + "T" : "")).filter(Boolean).join(", ");
     parts.push("⚫ Asphalt" + (mixList ? " · " + mixList : "") + (totalT > 0 ? " (" + totalT + "T total)" : ""));
@@ -2601,6 +2602,8 @@ function getAsphaltMixRows() {
   // Returns mixes grouped by date key
   const container = document.getElementById("asphalt-days-container");
   if (!container) return {};
+  // Safety: if no day sections yet, return empty object
+  if (container.querySelectorAll(".asphalt-day-section").length === 0) return {};
   const result = {};
   container.querySelectorAll(".asphalt-day-section").forEach(function(section, idx) {
     const label = section.querySelector(".asphalt-day-label").textContent;
