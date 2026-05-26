@@ -2344,7 +2344,8 @@ function addTruckRow(contractorIdx, truckType, qty) {
   div.querySelector(".truck-qty-input").addEventListener("input", updateOrderSummary);
   div.querySelector(".truck-type-select").addEventListener("change", updateOrderSummary);
 
-  document.getElementById("truck-rows").appendChild(div);
+  // truck-rows replaced by day sections — this is a legacy call, skip
+  // document.getElementById("truck-rows").appendChild(div);
   updateOrderSummary();
 }
 
@@ -2376,13 +2377,17 @@ function updateOrderSummary() {
   }
   if (document.getElementById("toggle-profiler").classList.contains("on")) {
     const sizes = [];
-    if (document.getElementById("profiler-1m").checked) sizes.push("1m");
-    if (document.getElementById("profiler-2m").checked) sizes.push("2m");
+    // Profiler sizes now per-day — check any day section
+    document.querySelectorAll(".profiler-day-1m:checked").forEach(function() { if (sizes.indexOf("1m") < 0) sizes.push("1m"); });
+    document.querySelectorAll(".profiler-day-2m:checked").forEach(function() { if (sizes.indexOf("2m") < 0) sizes.push("2m"); });
     parts.push(`🔧 Profiler${sizes.length ? " (" + sizes.join(" + ") + ")" : ""}`);
   }
   if (document.getElementById("toggle-tc").classList.contains("on")) {
-    const tcs  = document.getElementById("tc-count").value;
-    const utes = document.getElementById("tc-utes").value;
+    // TC counts now per-day
+    const _tcData = getTCDayData();
+    const _tcTotals = Object.values(_tcData).reduce((acc, d) => { acc.tcs += parseInt(d.count)||0; acc.utes += parseInt(d.utes)||0; return acc; }, {tcs:0, utes:0});
+    const tcs  = _tcTotals.tcs  || "";
+    const utes = _tcTotals.utes || "";
     parts.push(`🚦 TC${tcs ? " " + tcs + " TCs" : ""}${utes ? " + " + utes + " utes" : ""}`);
   }
   if (document.getElementById("toggle-core").classList.contains("on")) {
@@ -2454,19 +2459,9 @@ function updateOrderSummary() {
   });
 });
 
-// Profiler chip toggles
-["1m","2m"].forEach(size => {
-  document.getElementById("chip-" + size).addEventListener("click", e => {
-    e.preventDefault();
-    const cb   = document.getElementById("profiler-" + size);
-    const chip = document.getElementById("chip-" + size);
-    cb.checked = !cb.checked;
-    chip.classList.toggle("selected", cb.checked);
-    updateOrderSummary();
-  });
-});
+// Profiler chip toggles removed — profiler is now per-day
 
-document.getElementById("btn-add-truck-row").addEventListener("click", () => addTruckRow());
+// btn-add-truck-row removed — each day has its own add button
 
 // ── Asphalt mix row system
 let asphaltMixRowCount = 0;
@@ -2799,8 +2794,7 @@ document.getElementById("order-close-btn").addEventListener("click", closeOrderM
 document.getElementById("order-overlay").addEventListener("click", e => {
   if (e.target === document.getElementById("order-overlay")) closeOrderModal();
 });
-document.getElementById("tc-count").addEventListener("input", updateOrderSummary);
-document.getElementById("tc-utes").addEventListener("input", updateOrderSummary);
+// tc-count and tc-utes listeners removed — now handled per day section
 
 // ─── SAVE & SEND ORDER ────────────────────────────────────────────────────────
 function gatherOrderEmails() {
@@ -3532,10 +3526,8 @@ document.getElementById("contractor-save-btn").addEventListener("click", () => {
   closeContractorModal();
   populateContractorDropdowns();
   // Rebuild truck rows with updated contractor list
-  const truckRowsEl = document.getElementById("truck-rows");
-  truckRowsEl.innerHTML = "";
+  // truck-rows replaced by day sections
   truckRowCount = 0;
-  addTruckRow();
   // Rebuild asphalt mix dropdowns with updated plant mixes
   document.querySelectorAll(".amix-type").forEach(sel => {
     const cur = sel.value;
@@ -3601,16 +3593,12 @@ document.getElementById("btn-clear-order").addEventListener("click", () => {
     document.getElementById("toggle-" + s).classList.remove("on");
     document.getElementById(s + "-body").classList.remove("open");
   });
-  document.getElementById("truck-rows").innerHTML = "";
+  // truck-rows replaced by day sections
   truckRowCount = 0;
-  addTruckRow();
-  document.getElementById("profiler-1m").checked = false;
-  document.getElementById("profiler-2m").checked = false;
-  document.getElementById("chip-1m").classList.remove("selected");
-  document.getElementById("chip-2m").classList.remove("selected");
+  // profiler-1m/2m replaced by day sections
+  // chip-1m/2m replaced by day sections
   document.getElementById("profiler-notes").value = "";
-  document.getElementById("tc-count").value = "";
-  document.getElementById("tc-utes").value  = "";
+  // tc-count/utes replaced by day sections
   document.getElementById("tc-notes").value = "";
   document.getElementById("order-confirmed-badge").style.display = "none";
   document.getElementById("btn-clear-order").style.display = "none";
