@@ -2287,10 +2287,11 @@ function renderConfirmationSection(job, savedOrder) {
 function populateContractorDropdowns() {
   const contractors = loadContractors();
   [
-    { id: "profiler-contractor",  key: "profiler" },
-    { id: "tc-contractor",        key: "tc"       },
-    { id: "core-contractor",      key: "core"     },
-    { id: "asphalt-contractor",   key: "asphalt"  },
+    { id: "truck-contractor-global", key: "trucks"  },
+    { id: "profiler-contractor",     key: "profiler" },
+    { id: "tc-contractor",           key: "tc"       },
+    { id: "core-contractor",         key: "core"     },
+    { id: "asphalt-contractor",      key: "asphalt"  },
   ].forEach(({ id, key }) => {
     const list = contractors[key] || [];
     const sel  = document.getElementById(id);
