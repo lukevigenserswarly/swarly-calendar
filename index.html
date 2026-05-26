@@ -2590,24 +2590,24 @@ function gatherOrderEmails() {
     truckRows.forEach(r => { if (!grouped[r.contractorIdx]) grouped[r.contractorIdx]=0; grouped[r.contractorIdx]+=r.qty; });
     Object.entries(grouped).forEach(([idx, qty]) => {
       const co = contractors.trucks[parseInt(idx)];
-      if (co && co.email) emails.push({ type:"Trucking", contractor:co, subject:"Truck Booking Request - "+formatDisplayDate(job.startDate), body:buildTruckEmail(job,co,qty,truckRows.filter(r=>r.contractorIdx==parseInt(idx))) });
+      if (co && co.email) emails.push({ type:"Trucking", contractor:co, subject:"Truck Booking Request - "+buildDateRange(job), body:buildTruckEmail(job,co,qty,truckRows.filter(r=>r.contractorIdx==parseInt(idx))) });
     });
   }
   if (orderData.profiler.enabled) {
     const co = contractors.profiler[orderData.profiler.contractorIdx];
-    if (co && co.email) emails.push({ type:"Profiler", contractor:co, subject:"Profiler Booking Request - "+formatDisplayDate(job.startDate), body:buildProfilerEmail(job,co,orderData.profiler) });
+    if (co && co.email) emails.push({ type:"Profiler", contractor:co, subject:"Profiler Booking Request - "+buildDateRange(job), body:buildProfilerEmail(job,co,orderData.profiler) });
   }
   if (orderData.tc.enabled) {
     const co = contractors.tc[orderData.tc.contractorIdx];
-    if (co && co.email) emails.push({ type:"Traffic Control", contractor:co, subject:"Traffic Control Booking Request - "+formatDisplayDate(job.startDate), body:buildTCEmail(job,co,orderData.tc) });
+    if (co && co.email) emails.push({ type:"Traffic Control", contractor:co, subject:"Traffic Control Booking Request - "+buildDateRange(job), body:buildTCEmail(job,co,orderData.tc) });
   }
   if (orderData.core && orderData.core.enabled) {
     const co = (contractors.core || [])[orderData.core.contractorIdx];
-    if (co && co.email) emails.push({ type:"Core Testing", contractor:co, subject:"Core Testing Request - "+formatDisplayDate(job.startDate), body:buildCoreEmail(job,co,orderData.core) });
+    if (co && co.email) emails.push({ type:"Core Testing", contractor:co, subject:"Core Testing Request - "+buildDateRange(job), body:buildCoreEmail(job,co,orderData.core) });
   }
   if (orderData.asphalt && orderData.asphalt.enabled) {
     const co = (contractors.asphalt || [])[orderData.asphalt.contractorIdx];
-    if (co && co.email) emails.push({ type:"Asphalt", contractor:co, subject:"Asphalt Order - "+formatDisplayDate(job.startDate), body:buildAsphaltEmail(job,co,orderData.asphalt) });
+    if (co && co.email) emails.push({ type:"Asphalt", contractor:co, subject:"Asphalt Order - "+buildDateRange(job), body:buildAsphaltEmail(job,co,orderData.asphalt) });
   }
   return emails;
 }
@@ -2766,6 +2766,13 @@ function sendViaOutlook({ to, subject, body }) {
   return true;
 }
 // ─── EMAIL BUILDERS ───────────────────────────────────────────────────────────
+function buildDateRange(job) {
+  const start = formatDisplayDate(job.startDate);
+  if (!job.endDate || job.endDate === job.startDate) return start;
+  const end = formatDisplayDate(job.endDate);
+  return start + " - " + end;
+}
+
 function buildTruckEmail(job, contractor, qty, truckRows) {
   truckRows = truckRows || [];
   const dur = dateDiffDays(job.startDate, job.endDate) + 1;
@@ -2909,6 +2916,13 @@ function buildAsphaltEmail(job, contractor, asphalt) {
   lines.push("");
 
   return lines.join("\n");
+}
+
+function buildDateRange(job) {
+  const start = formatDisplayDate(job.startDate);
+  if (!job.endDate || job.endDate === job.startDate) return start;
+  const end = formatDisplayDate(job.endDate);
+  return start + " - " + end;
 }
 
 function buildTruckEmail(job, contractor, qty, truckRows) {
