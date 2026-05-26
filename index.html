@@ -1955,14 +1955,28 @@ function fetchShared(action, callback) {
 }
 
 function saveShared(action, data, callback) {
-  fetch(SHARED_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: action, data: data })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(d) { if (callback) callback(d.success); })
-  .catch(function() { if (callback) callback(false); });
+  // Use JSONP GET to avoid CORS — encode data in URL
+  var cbName = 'saveCB_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+  var script = document.createElement('script');
+  var timer  = setTimeout(function() {
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    if (callback) callback(false);
+  }, 15000);
+  window[cbName] = function(result) {
+    clearTimeout(timer);
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    if (callback) callback(result && result.success);
+  };
+  script.onerror = function() {
+    clearTimeout(timer);
+    delete window[cbName];
+    if (callback) callback(false);
+  };
+  var encoded = encodeURIComponent(JSON.stringify(data));
+  script.src = SHARED_SCRIPT_URL + '?action=' + action + '&data=' + encoded + '&callback=' + cbName;
+  document.head.appendChild(script);
 }
 
 function loadContractors() {
