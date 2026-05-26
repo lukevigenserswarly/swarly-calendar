@@ -1573,10 +1573,12 @@ function formatDisplayDate(str) {
 }
 
 async function sendJobEmail(job, mode) {
+  // Job notification emails disabled — not supported from GitHub Pages
+  const _ind = document.getElementById("email-indicator");
+  if (_ind) _ind.classList.remove("show");
+  return;
   const s = loadSettings();
-  if (!s.email) return; // no email configured — silently skip
-  if (mode === "new"  && s.notifyNew  === false) return;
-  if (mode === "edit" && s.notifyEdit === false) return;
+  if (!s.email) return;
 
   const indicator = document.getElementById("email-indicator");
   indicator.classList.add("show");
