@@ -1480,7 +1480,7 @@ function showTooltip(e, job) {
         const _ttConfs = _ttOrder.confirmations || {};
         const _ttItems = [];
 
-        if (_ttOrder.trucks && _ttOrder.trucks.enabled && _ttOrder.trucks.rows) {
+        if (_ttOrder.trucks && _ttOrder.trucks.enabled) {
           const grouped = {};
           _ttOrder.trucks.rows.forEach(function(r) { if(r.qty>0 && !grouped[r.contractorIdx]) grouped[r.contractorIdx]=true; });
           Object.keys(grouped).forEach(function(idx) {
@@ -2168,20 +2168,17 @@ function renderConfirmationSection(job, savedOrder) {
   const items = [];
 
   // Build list of contractors that were ordered
-  if (savedOrder.trucks && savedOrder.trucks.enabled && savedOrder.trucks.rows) {
-    const grouped = {};
-    savedOrder.trucks.rows.forEach(r => {
-      if (r.qty > 0) {
-        const key = r.contractorIdx;
-        if (!grouped[key]) grouped[key] = { qty: 0, types: [] };
-        grouped[key].qty += r.qty;
-        if (!grouped[key].types.includes(r.truckType)) grouped[key].types.push(r.truckType);
-      }
-    });
-    Object.entries(grouped).forEach(([idx, info]) => {
-      const co = contractors.trucks[parseInt(idx)];
-      if (co) items.push({ key: "trucks_" + idx, label: co.name, sub: info.qty + " truck" + (info.qty !== 1 ? "s" : "") + " · " + info.types.join(", "), type: "Trucking" });
-    });
+  if (savedOrder.trucks && savedOrder.trucks.enabled) {
+    const co = contractors.trucks && contractors.trucks[savedOrder.trucks.contractorIdx];
+    if (co) {
+      // Summarise from days data
+      const days = savedOrder.trucks.days || {};
+      const allRows = Object.values(days).reduce((a, b) => a.concat(b), []);
+      const totalQty = allRows.reduce((s, r) => s + (parseInt(r.qty) || 0), 0);
+      const types = [...new Set(allRows.map(r => r.truckType).filter(Boolean))];
+      const sub = (totalQty > 0 ? totalQty + " truck" + (totalQty !== 1 ? "s" : "") : "Trucking") + (types.length ? " · " + types.join(", ") : "");
+      items.push({ key: "trucks_0", label: co.name, sub: sub, type: "Trucking" });
+    }
   }
   if (savedOrder.profiler && savedOrder.profiler.enabled) {
     const co = contractors.profiler[savedOrder.profiler.contractorIdx];
@@ -2248,14 +2245,10 @@ function renderConfirmationSection(job, savedOrder) {
       const keyParts = item.key.split("_");
       const type = keyParts[0];
 
-      if (type === "trucks" && ord.trucks && ord.trucks.rows) {
-        // Remove all truck rows for this contractor index
-        const contractorIdx = parseInt(keyParts[1]);
-        ord.trucks.rows = ord.trucks.rows.filter(function(r) {
-          return r.contractorIdx !== contractorIdx;
-        });
-        // If no rows left disable trucks entirely
-        if (ord.trucks.rows.length === 0) ord.trucks.enabled = false;
+      if (type === "trucks" && ord.trucks) {
+        // Disable trucking entirely
+        ord.trucks.enabled = false;
+        ord.trucks.days = {};
       } else if (type === "profiler" && ord.profiler) {
         ord.profiler.enabled = false;
         ord.profiler.contractorIdx = null;
