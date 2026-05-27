@@ -2445,13 +2445,15 @@ function updateOrderSummary() {
     const body = document.getElementById(s + "-body");
     tog.classList.toggle("on");
     body.classList.toggle("open", tog.classList.contains("on"));
-    // When asphalt toggled ON, refresh mix dropdowns with current plant's mixes
+    // When asphalt toggled ON, populate contractor dropdown and rebuild day sections if empty
     if (s === "asphalt" && tog.classList.contains("on")) {
       populateContractorDropdowns();
-      document.querySelectorAll(".amix-type").forEach(sel => {
-        const cur = sel.value;
-        sel.innerHTML = buildMixOptions(cur);
-      });
+      // If no day sections built yet, build them now with parser pre-fill
+      const daysContainer = document.getElementById("asphalt-days-container");
+      if (daysContainer && daysContainer.querySelectorAll(".asphalt-day-section").length === 0 && currentOrderJob) {
+        asphaltMixRowCount = 0;
+        buildAsphaltDaySections(currentOrderJob, null);
+      }
     }
     updateOrderSummary();
   });
