@@ -2694,6 +2694,67 @@ function getTCDayData() {
   return result;
 }
 
+// ─── ASPHALT DESCRIPTION PARSER ─────────────────────────────────────────────
+function parseAsphaltFromDescription(text) {
+  if (!text) return [];
+  var results = [];
+  var lines = text.split('\n');
+
+  lines.forEach(function(line) {
+    // Match full mix names: e.g. "AC14 C320", "AC14 A15E", "Type 3 Multigrade", "EME2", "AC20 C320"
+    // Pattern: optional prefix like "50/50 DTMR", then mix base, then binder class
+    var mixPattern = /(?:AC\d+[A-Z]?\s+(?:C320|A15E|Multigrade|EME2?)|EME2?|Type\s*\d+\s*(?:Multigrade|C320|320)?|DG\d+\s*(?:C320|A15E)?|B\d\s*(?:C320)?|AC\d+[A-Z]?\s*C320)/gi;
+    var tonnagePattern = /(\d+(?:\.\d+)?)\s*[tT](?:onnes?)?/g;
+
+    var mixes = [];
+    var m;
+    while ((m = mixPattern.exec(line)) !== null) {
+      mixes.push(m[0].replace(/\s+/g, ' ').trim().toUpperCase());
+    }
+
+    var tonnes = [];
+    while ((m = tonnagePattern.exec(line)) !== null) {
+      if (parseFloat(m[1]) > 0 && parseFloat(m[1]) < 9999) {
+        tonnes.push(m[1]);
+      }
+    }
+
+    if (mixes.length > 0 && tonnes.length > 0) {
+      if (mixes.length === tonnes.length) {
+        // One tonne per mix — pair them up
+        mixes.forEach(function(mix, i) {
+          results.push({ mix: mix, tonnes: tonnes[i] });
+        });
+      } else {
+        // Use first tonnage for all mixes, or just first mix with total
+        mixes.forEach(function(mix) {
+          results.push({ mix: mix, tonnes: tonnes[0] });
+        });
+      }
+    }
+  });
+
+  // Also catch "approx. Xt of [mix]" pattern
+  var approxPattern = /approx\.?\s+(\d+(?:\.\d+)?)\s*(?:t|T|tonnes?)\s+(?:of\s+)?(AC\d+[A-Z]?\s+(?:C320|A15E|Multigrade)|Type\s*\d+\s*(?:Multigrade|C320)?|EME2?)/gi;
+  var am;
+  while ((am = approxPattern.exec(text)) !== null) {
+    var tonnes = am[1];
+    var mix = am[2].replace(/\s+/g, ' ').trim().toUpperCase();
+    if (!results.find(function(r) { return r.mix === mix; })) {
+      results.push({ mix: mix, tonnes: tonnes });
+    }
+  }
+
+  // Deduplicate
+  var seen = new Set();
+  return results.filter(function(r) {
+    var key = r.mix + '_' + r.tonnes;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return r.mix && r.tonnes;
+  }).slice(0, 10);
+}
+
 function buildAsphaltDaySections(job, savedMixes) {
   const container = document.getElementById("asphalt-days-container");
   if (!container) return;
@@ -2738,12 +2799,20 @@ function buildAsphaltDaySections(job, savedMixes) {
       addAsphaltMixRow(idx, "", "", "");
     });
 
-    // Load saved mixes for this date
+    // Load saved mixes for this date, or parse from description if no saved data
     const saved = savedMixes ? (savedMixes[dateKey] || []) : [];
     if (saved.length > 0) {
       saved.forEach(function(r) { addAsphaltMixRow(idx, r.mix, r.tonnes, r.time); });
+    } else if (idx === 0 && !savedMixes) {
+      // First day and no saved order — try to parse from job description
+      const parsed = parseAsphaltFromDescription(job.notes || job.description || '');
+      if (parsed.length > 0) {
+        parsed.forEach(function(r) { addAsphaltMixRow(idx, r.mix, r.tonnes, ''); });
+      } else {
+        addAsphaltMixRow(idx, "", "", "");
+      }
     } else {
-      addAsphaltMixRow(idx, "", "", ""); // start with one empty row
+      addAsphaltMixRow(idx, "", "", "");
     }
   });
 }
