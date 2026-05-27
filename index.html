@@ -2698,61 +2698,136 @@ function getTCDayData() {
 function parseAsphaltFromDescription(text) {
   if (!text) return [];
   var results = [];
-  var lines = text.split('\n');
+  var isVirgin = /virgin/i.test(text);
+
+  function rap(str) {
+    return isVirgin ? str : str + ' RAP';
+  }
+
+  function normaliseMix(base, binder) {
+    // Normalise base
+    var b = base.trim().replace(/\s+/g, ' ');
+    b = b.replace(/Type\s*(\d)/i, 'Type $1');
+    b = b.replace(/AC14H/i, 'AC14H');
+    // Normalise binder — 320 shorthand = C320
+    var bn = (binder || '').trim();
+    if (bn === '320') bn = 'C320';
+    if (bn) return rap(b + ' ' + bn);
+    return rap(b);
+  }
+
+  function addResult(mix, tonnes) {
+    if (!mix) return;
+    var key = mix + '|' + (tonnes || '');
+    if (results.find(function(r) { return r.mix + '|' + r.tonnes === key; })) return;
+    results.push({ mix: mix, tonnes: tonnes || '' });
+  }
+
+  // Base types regex string
+  var BASE = '(?:AC\\d+[A-Z]?|EME2?|DG\\d+|Type\\s*\\d+|B[34])';
+  // Binder regex string
+  var BIND = '(?:C320|A15E|Multigrade|M1000|C170|320)';
+  // Full mix = BASE optionally followed by BIND
+  var FULL = BASE + '(?:\\s+' + BIND + ')?';
+
+  var t = text.replace(/\t/g, ' ');
+  var lines = t.split('\n');
 
   lines.forEach(function(line) {
-    // Match full mix names: e.g. "AC14 C320", "AC14 A15E", "Type 3 Multigrade", "EME2", "AC20 C320"
-    // Pattern: optional prefix like "50/50 DTMR", then mix base, then binder class
-    var mixPattern = /(?:AC\d+[A-Z]?\s+(?:C320|A15E|Multigrade|EME2?)|EME2?|Type\s*\d+\s*(?:Multigrade|C320|320)?|DG\d+\s*(?:C320|A15E)?|B\d\s*(?:C320)?|AC\d+[A-Z]?\s*C320)/gi;
-    var tonnagePattern = /(\d+(?:\.\d+)?)\s*[tT](?:onnes?)?/g;
+    var l = line.trim();
+    if (!l) return;
 
-    var mixes = [];
-    var m;
-    while ((m = mixPattern.exec(line)) !== null) {
-      mixes.push(m[0].replace(/\s+/g, ' ').trim().toUpperCase());
-    }
-
-    var tonnes = [];
-    while ((m = tonnagePattern.exec(line)) !== null) {
-      if (parseFloat(m[1]) > 0 && parseFloat(m[1]) < 9999) {
-        tonnes.push(m[1]);
-      }
-    }
-
-    if (mixes.length > 0 && tonnes.length > 0) {
-      if (mixes.length === tonnes.length) {
-        // One tonne per mix — pair them up
-        mixes.forEach(function(mix, i) {
-          results.push({ mix: mix, tonnes: tonnes[i] });
-        });
+    // ── DTMR split: "90/50 DTMR EME2/AC14 (C320)" ───────────────────────────
+    var re1 = /\d+\/\d+\s+DTMR\s+(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+)\s*\/\s*(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+)\s*(?:\(([A-Z0-9]+)\))?/i;
+    var m = l.match(re1);
+    if (m) {
+      var binder = m[3] || '';
+      // Find tonnage splits like "18t EME2 & 10t AC14"
+      var splitRe = /(\d+(?:\.\d+)?)\s*[tT]\s*(?:[-–]\s*)?(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+)/gi;
+      var splits = [], sm;
+      while ((sm = splitRe.exec(l)) !== null) splits.push({ tonnes: sm[1], base: sm[2] });
+      if (splits.length >= 2) {
+        splits.forEach(function(s) { addResult(normaliseMix(s.base, binder), s.tonnes); });
       } else {
-        // Use first tonnage for all mixes, or just first mix with total
-        mixes.forEach(function(mix) {
-          results.push({ mix: mix, tonnes: tonnes[0] });
-        });
+        var tMatch = l.match(/(\d+(?:\.\d+)?)\s*[tT]\b/);
+        addResult(normaliseMix(m[1], binder), tMatch ? tMatch[1] : '');
+        addResult(normaliseMix(m[2], binder), '');
       }
+      return;
+    }
+
+    // ── DTMR single: "50/50 DTMR AC14 (C320)" ───────────────────────────────
+    var re2 = /\d+\/\d+\s+DTMR\s+(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+)\s*(?:\(([A-Z0-9]+)\))?/i;
+    m = l.match(re2);
+    if (m) {
+      var tMatch = l.match(/(\d+(?:\.\d+)?)\s*[tT]\b/);
+      addResult(normaliseMix(m[1], m[2] || ''), tMatch ? tMatch[1] : '');
+      return;
+    }
+
+    // ── Multiple "Xt MIX & Xt MIX" on same line ─────────────────────────────
+    var multiRe = /(\d+(?:\.\d+)?)\s*[tT]\s*(?:[-–]\s*)?(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+|B[34])(?:\s+(C320|A15E|Multigrade|M1000|C170|320))?/gi;
+    var multiMatches = [], mm;
+    while ((mm = multiRe.exec(l)) !== null) multiMatches.push({ tonnes: mm[1], base: mm[2], binder: mm[3] || '' });
+    if (multiMatches.length > 1) {
+      multiMatches.forEach(function(x) { addResult(normaliseMix(x.base, x.binder), x.tonnes); });
+      return;
+    }
+
+    // ── "approx. Xt of MIX BINDER" ──────────────────────────────────────────
+    var approxRe = /(?:approx\.?\s+)?(\d[\d,]*(?:\.\d+)?)\s*(?:t|T|tonnes?)\s+(?:of\s+)?(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+|B[34])(?:\s+(C320|A15E|Multigrade|M1000|C170|320))?/gi;
+    var am;
+    while ((am = approxRe.exec(l)) !== null) {
+      addResult(normaliseMix(am[2], am[3] || ''), am[1].replace(/,/g, ''));
+    }
+
+    // ── "MIX BINDER - Xt" ────────────────────────────────────────────────────
+    var re3 = /(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+|B[34])(?:\s+(C320|A15E|Multigrade|M1000|C170|320))?\s*[-–]\s*(\d+(?:\.\d+)?)\s*[tT]\b/gi;
+    while ((am = re3.exec(l)) !== null) {
+      addResult(normaliseMix(am[1], am[2] || ''), am[3]);
+    }
+
+    // ── "Xt - MIX BINDER" or "Xt MIX BINDER" ────────────────────────────────
+    var re4 = /(\d+(?:\.\d+)?)\s*[tT]\s*(?:[-\u2013]\s*)?(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+|B[34])(?:\s+(C320|A15E|Multigrade|M1000|C170|320))?(?:\s+(?:asphalt|mix))?/gi;
+    var re4pre = /(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+|B[34])\s+(C320|A15E|Multigrade|M1000|C170|320)\s*(?:asphalt|mix)?\s*[-\u2013]\s*(\d+(?:\.\d+)?)\s*[tT]\b/gi;
+    while ((am = re4pre.exec(l)) !== null) { addResult(normaliseMix(am[1], am[2]), am[3]); }
+    while ((am = re4.exec(l)) !== null) {
+      addResult(normaliseMix(am[2], am[3] || ''), am[1]);
+    }
+
+    // ── "Type X 320" shorthand (320 as standalone binder after Type) ──────────
+    var re4b = /(Type\s*\d+)\s+(320)\s+(?:asphalt\s+)?[-–]\s*(\d+(?:\.\d+)?)\s*[tT]/gi;
+    while ((am = re4b.exec(l)) !== null) {
+      addResult(normaliseMix(am[1], am[2]), am[3]);
+    }
+    var re4c = /(\d+(?:\.\d+)?)\s*[tT]\s*(?:[-–]\s*)?(Type\s*\d+)\s+(320)/gi;
+    while ((am = re4c.exec(l)) !== null) {
+      addResult(normaliseMix(am[2], am[3]), am[1]);
+    }
+
+    // ── "@ Xmm MIX BINDER - Xt" ─────────────────────────────────────────────
+    var re5 = /\d+mm\s+(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+|B[34])(?:\s+(C320|A15E|Multigrade|M1000|C170|320))?\s*[-–]\s*(\d+(?:\.\d+)?)\s*[tT]\b/gi;
+    while ((am = re5.exec(l)) !== null) {
+      addResult(normaliseMix(am[1], am[2] || ''), am[3]);
+    }
+
+    // ── "B3 C320 @ Xmm" with tonnage elsewhere on line ──────────────────────
+    var re6 = /(B[34])\s+(C320|A15E|Multigrade|320)/i;
+    m = l.match(re6);
+    if (m) {
+      var tMatch = l.match(/(\d[\d,]*(?:\.\d+)?)\s*[tT]\b/);
+      if (tMatch) addResult(normaliseMix(m[1], m[2]), tMatch[1].replace(/,/g, ''));
     }
   });
 
-  // Also catch "approx. Xt of [mix]" pattern
-  var approxPattern = /approx\.?\s+(\d+(?:\.\d+)?)\s*(?:t|T|tonnes?)\s+(?:of\s+)?(AC\d+[A-Z]?\s+(?:C320|A15E|Multigrade)|Type\s*\d+\s*(?:Multigrade|C320)?|EME2?)/gi;
-  var am;
-  while ((am = approxPattern.exec(text)) !== null) {
-    var tonnes = am[1];
-    var mix = am[2].replace(/\s+/g, ' ').trim().toUpperCase();
-    if (!results.find(function(r) { return r.mix === mix; })) {
-      results.push({ mix: mix, tonnes: tonnes });
-    }
-  }
-
-  // Deduplicate
-  var seen = new Set();
+  // Final dedup
+  var seen = {};
   return results.filter(function(r) {
-    var key = r.mix + '_' + r.tonnes;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return r.mix && r.tonnes;
-  }).slice(0, 10);
+    var key = r.mix + '|' + r.tonnes;
+    if (seen[key]) return false;
+    seen[key] = true;
+    return !!r.mix;
+  }).slice(0, 15);
 }
 
 function buildAsphaltDaySections(job, savedMixes) {
