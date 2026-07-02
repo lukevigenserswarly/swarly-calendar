@@ -347,8 +347,14 @@
   .btn-add-row:hover { background: #EEF6FF; }
   /* Asphalt mix rows */
   .asphalt-mix-row { display: grid; grid-template-columns: 1fr 100px 110px auto; gap: 8px; align-items: center; padding: 8px 10px; background: #F8FBFF; border: 1.5px solid #E2EEF8; border-radius: 8px; }
-  .asphalt-mix-row select, .asphalt-mix-row input { padding: 7px 8px; border: 1.5px solid #DDE3EE; border-radius: 7px; font-size: 12px; font-family: inherit; color: #1A202C; background: #fff; width: 100%; }
-  .asphalt-mix-row select:focus, .asphalt-mix-row input:focus { outline: none; border-color: #2176AE; }
+  .asphalt-mix-row input { padding: 7px 8px; border: 1.5px solid #DDE3EE; border-radius: 7px; font-size: 12px; font-family: inherit; color: #1A202C; background: #fff; width: 100%; }
+  .asphalt-mix-row input:focus { outline: none; border-color: #2176AE; }
+  .asphalt-day-section { border: 1.5px solid #D0DDEF; border-radius: 10px; padding: 10px; margin-bottom: 10px; background: #F8FBFF; }
+  .asphalt-day-label { font-size: 11px; font-weight: 800; color: #2176AE; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .asphalt-day-total { font-size: 11px; color: #6B7A99; font-weight: 600; margin-top: 4px; }
+  .day-breakdown-section { border: 1.5px solid #D0DDEF; border-radius: 10px; padding: 10px; margin-bottom: 8px; background: #F8FBFF; }
+  .day-breakdown-label { font-size: 11px; font-weight: 800; color: #2176AE; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .day-not-required { font-size: 11px; color: #8AAAC0; font-style: italic; }
   .asphalt-section-label { font-size: 10px; font-weight: 800; color: #6B7A99; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; margin-top: 6px; display: block; }
   /* Plant mix type chips in contractor management */
   .mix-type-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
@@ -559,6 +565,10 @@
       <div class="settings-row"><label>Your email</label><input type="email" id="settings-email" placeholder="you@example.com" /></div>
       <div class="settings-row"><label>Your name</label><input type="text" id="settings-name" placeholder="e.g. Luke" /></div>
       <div id="email-sending-status"></div>
+      <div class="settings-section-title" style="margin-top:18px;">Contractors</div>
+      <div style="margin-bottom:16px;">
+        <button class="btn-primary" id="settings-manage-contractors-btn" style="width:100%;padding:10px;font-size:13px;">&#128101; Manage Contractors</button>
+      </div>
       <div id="settings-save-row">
         <button class="btn-secondary" id="settings-cancel-btn">Cancel</button>
         <button class="btn-primary" id="settings-save-btn">Save Settings</button>
@@ -595,8 +605,10 @@
           <button class="order-section-toggle" id="toggle-trucks"></button>
         </div>
         <div class="order-section-body" id="trucks-body">
-          <div id="truck-rows"></div>
-          <button class="btn-add-row" id="btn-add-truck-row">+ Add Contractor</button>
+          <div class="field" style="margin-bottom:8px;"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Select Contractor</label>
+            <select id="truck-contractor-global" style="width:100%;padding:7px 10px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;"></select>
+          </div>
+          <div id="truck-days-container"></div>
         </div>
       </div>
       <div class="order-section" id="section-profiler">
@@ -606,17 +618,11 @@
           <button class="order-section-toggle" id="toggle-profiler"></button>
         </div>
         <div class="order-section-body" id="profiler-body">
-          <div style="margin-bottom:8px;">
-            <div class="field" style="margin-bottom:8px;"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Select Contractor</label>
-              <select id="profiler-contractor" style="width:100%;padding:7px 10px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;"></select>
-            </div>
-            <div style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Profiler Size Required</div>
-            <div class="profiler-options">
-              <label class="profiler-chip" id="chip-1m"><input type="checkbox" id="profiler-1m" style="display:none;"> 1m Profiler</label>
-              <label class="profiler-chip" id="chip-2m"><input type="checkbox" id="profiler-2m" style="display:none;"> 2m Profiler</label>
-            </div>
+          <div class="field" style="margin-bottom:8px;"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Select Contractor</label>
+            <select id="profiler-contractor" style="width:100%;padding:7px 10px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;"></select>
           </div>
-          <div class="field"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Notes for Profiler Contractor</label>
+          <div id="profiler-days-container"></div>
+          <div class="field" style="margin-top:8px;"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Notes</label>
             <textarea id="profiler-notes" style="width:100%;padding:7px 10px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;resize:vertical;min-height:50px;" placeholder="e.g. depth, passes required&hellip;"></textarea>
           </div>
         </div>
@@ -628,14 +634,11 @@
           <button class="order-section-toggle" id="toggle-tc"></button>
         </div>
         <div class="order-section-body" id="tc-body">
-          <div class="tc-counts">
-            <div class="tc-count-field"><label>No. of TCs</label><input type="number" id="tc-count" min="0" placeholder="0" /></div>
-            <div class="tc-count-field"><label>No. of Utes</label><input type="number" id="tc-utes" min="0" placeholder="0" /></div>
-          </div>
-          <div class="field"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Select Contractor</label>
+          <div class="field" style="margin-bottom:8px;"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Select Contractor</label>
             <select id="tc-contractor" style="width:100%;padding:7px 10px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;"></select>
           </div>
-          <div class="field"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Notes for TC Contractor</label>
+          <div id="tc-days-container"></div>
+          <div class="field" style="margin-top:8px;"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Notes</label>
             <textarea id="tc-notes" style="width:100%;padding:7px 10px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;resize:vertical;min-height:50px;" placeholder="e.g. setup time, specific requirements&hellip;"></textarea>
           </div>
         </div>
@@ -671,9 +674,8 @@
           </div>
 
           <span class="asphalt-section-label">Mix Orders</span>
-          <div style="font-size:10px;color:#8AAAC0;margin-bottom:6px;margin-top:-2px;">Select mix type, tonnage and load-out time. Add a row for each mix needed.</div>
-          <div id="asphalt-mix-rows"></div>
-          <button class="btn-add-row" id="btn-add-asphalt-mix" style="margin-top:4px;">+ Add Mix</button>
+          <div style="font-size:10px;color:#8AAAC0;margin-bottom:6px;margin-top:-2px;">Add mix type, tonnage and load-out time for each day.</div>
+          <div id="asphalt-days-container"></div>
 
           <div class="grid-2" style="margin-top:12px;">
             <div class="field"><label style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.06em;">Site Contact</label>
@@ -782,12 +784,11 @@
 const ROWS = [
   { id:"nic",         label:"Nic's Crew",               color:"#2176AE" },
   { id:"tj",          label:"TJ's Crew",                color:"#1A6B3C" },
-  { id:"ambrose",     label:"Ambrose's Crew",           color:"#7B3F00" },
+  { id:"ambrose",     label:"Ambrose Crew",             color:"#7B3F00" },
   { id:"brendon",     label:"Brendon's Crew",           color:"#5C3D8F" },
   { id:"subbie",      label:"Subbie Crew",              color:"#6C8EBF" },
   { id:"labour",      label:"Labour Hire / Bobcat Hire",color:"#4A7C59" },
   { id:"seal",        label:"Seal / Prime",             color:"#2E8B57" },
-  { id:"inspections", label:"Site Inspections",         color:"#B8860B" },
   { id:"cartageday",  label:"Cartage Day",              color:"#D4601A" },
   { id:"cartagenight",label:"Cartage Night",            color:"#C0392B" },
   { id:"maintenance", label:"Maintenance",              color:"#8B1A1A" },
@@ -874,7 +875,7 @@ function isPublicHoliday(d) {
 
 // ─── STATE ──────────────────────────────────────────────────────────────────
 let view   = "2 Weeks";
-let anchor = weekStart(new Date());
+let anchor = new Date(); anchor.setHours(12,0,0,0);
 let jobs   = loadJobs();
 let editingId = null;
 
@@ -1471,36 +1472,37 @@ function showTooltip(e, job) {
 
     // Contractor confirmations - separate try so basic info always shows
     try {
-      const _ttOrders = loadOrders();
-      const _ttOrder  = _ttOrders[job.id];
-      if (_ttOrder && _ttOrder._confirmed) {
+      // Try shared orders first, fall back to localStorage
+      var _ttOrders = loadOrders();
+      // Also check localStorage directly in case shared hasn't synced yet
+      if (!_ttOrders || Object.keys(_ttOrders).length === 0) {
+        try { _ttOrders = JSON.parse(localStorage.getItem("swarly_orders_v1")) || {}; } catch(e) {}
+      }
+      const _ttOrder = _ttOrders[job.id];
+      if (_ttOrder) {
         const _ttContractors = loadContractors();
         const _ttConfs = _ttOrder.confirmations || {};
         const _ttItems = [];
 
-        if (_ttOrder.trucks && _ttOrder.trucks.enabled && _ttOrder.trucks.rows) {
-          const grouped = {};
-          _ttOrder.trucks.rows.forEach(function(r) { if(r.qty>0 && !grouped[r.contractorIdx]) grouped[r.contractorIdx]=true; });
-          Object.keys(grouped).forEach(function(idx) {
-            const co = _ttContractors.trucks[parseInt(idx)];
-            if (co) _ttItems.push({ key:"trucks_"+idx, name: co.name, type:"Trucks" });
-          });
+        if (_ttOrder.trucks && _ttOrder.trucks.enabled) {
+          const co = (_ttContractors.trucks || [])[_ttOrder.trucks.contractorIdx];
+          if (co) _ttItems.push({ key: "trucks_0", name: co.name, type: "Trucks" });
         }
         if (_ttOrder.profiler && _ttOrder.profiler.enabled) {
-          const co = _ttContractors.profiler[_ttOrder.profiler.contractorIdx];
-          if (co) _ttItems.push({ key:"profiler", name: co.name, type:"Profiler" });
+          const co = (_ttContractors.profiler || [])[_ttOrder.profiler.contractorIdx];
+          if (co) _ttItems.push({ key: "profiler", name: co.name, type: "Profiler" });
         }
         if (_ttOrder.tc && _ttOrder.tc.enabled) {
-          const co = _ttContractors.tc[_ttOrder.tc.contractorIdx];
-          if (co) _ttItems.push({ key:"tc", name: co.name, type:"TC" });
+          const co = (_ttContractors.tc || [])[_ttOrder.tc.contractorIdx];
+          if (co) _ttItems.push({ key: "tc", name: co.name, type: "Traffic Control" });
         }
         if (_ttOrder.core && _ttOrder.core.enabled) {
-          const co = (_ttContractors.core||[])[_ttOrder.core.contractorIdx];
-          if (co) _ttItems.push({ key:"core", name: co.name, type:"Core" });
+          const co = (_ttContractors.core || [])[_ttOrder.core.contractorIdx];
+          if (co) _ttItems.push({ key: "core", name: co.name, type: "Core Testing" });
         }
         if (_ttOrder.asphalt && _ttOrder.asphalt.enabled) {
-          const co = (_ttContractors.asphalt||[])[_ttOrder.asphalt.contractorIdx];
-          if (co) _ttItems.push({ key:"asphalt", name: co.name, type:"Asphalt" });
+          const co = (_ttContractors.asphalt || [])[_ttOrder.asphalt.contractorIdx];
+          if (co) _ttItems.push({ key: "asphalt", name: co.name, type: "Asphalt" });
         }
 
         if (_ttItems.length > 0) {
@@ -1508,14 +1510,22 @@ function showTooltip(e, job) {
           divRow.style.cssText = "height:1px;background:#EEF4FB;margin:4px 0;";
           body.appendChild(divRow);
 
+          // Show a divider and header
+          const confHeader = document.createElement("div");
+          confHeader.style.cssText = "font-size:9px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.08em;margin:6px 0 3px;";
+          confHeader.textContent = "Contractors";
+          body.appendChild(confHeader);
+
           _ttItems.forEach(function(item) {
             const confirmed = !!_ttConfs[item.key];
             const div = document.createElement("div");
             div.className = "tooltip-row";
+            div.style.cssText = "display:flex;align-items:center;gap:5px;padding:2px 0;";
             div.innerHTML =
-              '<span class="tooltip-icon">' + (confirmed ? "\u2705" : "\u23F3") + '</span>' +
-              '<span class="tooltip-value" style="color:' + (confirmed ? "#1A6B3C" : "#B8860B") + ';">' +
-              esc(item.type) + ": " + esc(item.name) + " \u2014 " + (confirmed ? "Confirmed" : "Awaiting Confirmation") +
+              '<span style="font-size:12px;">' + (confirmed ? "\u2705" : "\u23F3") + '</span>' +
+              '<span style="font-size:11px;font-weight:' + (confirmed ? "700" : "500") + ';color:' + (confirmed ? "#1A6B3C" : "#B8860B") + ';">' +
+              esc(item.type) + ': <span style="font-weight:600;">' + esc(item.name) + '</span>' +
+              ' <span style="font-size:10px;opacity:0.8;">' + (confirmed ? "✓ Confirmed" : "Awaiting") + '</span>' +
               '</span>';
             body.appendChild(div);
           });
@@ -1571,10 +1581,12 @@ function formatDisplayDate(str) {
 }
 
 async function sendJobEmail(job, mode) {
+  // Job notification emails disabled — not supported from GitHub Pages
+  const _ind = document.getElementById("email-indicator");
+  if (_ind) _ind.classList.remove("show");
+  return;
   const s = loadSettings();
-  if (!s.email) return; // no email configured — silently skip
-  if (mode === "new"  && s.notifyNew  === false) return;
-  if (mode === "edit" && s.notifyEdit === false) return;
+  if (!s.email) return;
 
   const indicator = document.getElementById("email-indicator");
   indicator.classList.add("show");
@@ -1628,17 +1640,15 @@ Use the Gmail create_draft tool then nothing else — actually no, use send capa
 
 // ─── NAVIGATION ──────────────────────────────────────────────────────────────
 document.getElementById("btn-prev").addEventListener("click", () => {
-  const step = view === "1 Week" ? 7 : view === "2 Weeks" ? 14 : 28;
-  anchor = addDays(anchor, -step);
+  anchor = addDays(anchor, -1);
   render();
 });
 document.getElementById("btn-next").addEventListener("click", () => {
-  const step = view === "1 Week" ? 7 : view === "2 Weeks" ? 14 : 28;
-  anchor = addDays(anchor, step);
+  anchor = addDays(anchor, 1);
   render();
 });
 document.getElementById("btn-today").addEventListener("click", () => {
-  anchor = weekStart(new Date());
+  anchor = new Date(); anchor.setHours(12,0,0,0);
   render();
 });
 
@@ -1955,14 +1965,28 @@ function fetchShared(action, callback) {
 }
 
 function saveShared(action, data, callback) {
-  fetch(SHARED_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: action, data: data })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(d) { if (callback) callback(d.success); })
-  .catch(function() { if (callback) callback(false); });
+  // Use JSONP GET to avoid CORS — encode data in URL
+  var cbName = 'saveCB_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+  var script = document.createElement('script');
+  var timer  = setTimeout(function() {
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    if (callback) callback(false);
+  }, 15000);
+  window[cbName] = function(result) {
+    clearTimeout(timer);
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    if (callback) callback(result && result.success);
+  };
+  script.onerror = function() {
+    clearTimeout(timer);
+    delete window[cbName];
+    if (callback) callback(false);
+  };
+  var encoded = encodeURIComponent(JSON.stringify(data));
+  script.src = SHARED_SCRIPT_URL + '?action=' + action + '&data=' + encoded + '&callback=' + cbName;
+  document.head.appendChild(script);
 }
 
 function loadContractors() {
@@ -2013,6 +2037,8 @@ function loadSharedDataAndInit() {
         if (local) _sharedContractors = { ...JSON.parse(JSON.stringify(DEFAULT_CONTRACTORS)), ...local };
       } catch(e) {}
     }
+    // Repopulate dropdowns now that contractors are loaded
+    if (typeof populateContractorDropdowns === 'function') populateContractorDropdowns();
   });
 
   // Load orders
@@ -2064,29 +2090,21 @@ function openOrderModal(jobRef) {
     });
 
     // Truck rows
-    const truckRowsEl = document.getElementById("truck-rows");
-    truckRowsEl.innerHTML = "";
-    truckRowCount = 0;
-    if (saved.trucks && saved.trucks.rows && saved.trucks.rows.length) {
-      saved.trucks.rows.forEach(r => addTruckRow(r.contractorIdx, r.truckType, r.qty));
-    } else {
-      addTruckRow();
-    }
+    // Build fresh day sections
+    // Build day sections with saved data
+    buildTruckDaySections(job, saved.trucks && saved.trucks.days);
+    buildProfilerDaySections(job, saved.profiler && saved.profiler.days);
+    buildTCDaySections(job, saved.tc && saved.tc.days);
 
-    // Profiler
-    const p1m = !!(saved.profiler && saved.profiler.size1m);
-    const p2m = !!(saved.profiler && saved.profiler.size2m);
-    document.getElementById("profiler-1m").checked = p1m;
-    document.getElementById("profiler-2m").checked = p2m;
-    document.getElementById("chip-1m").classList.toggle("selected", p1m);
-    document.getElementById("chip-2m").classList.toggle("selected", p2m);
+    // Restore global contractors
+    if (saved.trucks && saved.trucks.contractorIdx != null) {
+      const tg = document.getElementById("truck-contractor-global");
+      if (tg) tg.value = saved.trucks.contractorIdx;
+    }
     document.getElementById("profiler-notes").value = (saved.profiler && saved.profiler.notes) || "";
     if (saved.profiler && saved.profiler.contractorIdx != null)
       document.getElementById("profiler-contractor").value = saved.profiler.contractorIdx;
 
-    // TC
-    document.getElementById("tc-count").value = (saved.tc && saved.tc.count) || "";
-    document.getElementById("tc-utes").value  = (saved.tc && saved.tc.utes)  || "";
     document.getElementById("tc-notes").value = (saved.tc && saved.tc.notes) || "";
     if (saved.tc && saved.tc.contractorIdx != null)
       document.getElementById("tc-contractor").value = saved.tc.contractorIdx;
@@ -2100,14 +2118,9 @@ function openOrderModal(jobRef) {
     document.getElementById("asphalt-phone").value   = (saved.asphalt && saved.asphalt.phone)   || _savedContact.phone || "";
     if (saved.asphalt && saved.asphalt.contractorIdx != null)
       document.getElementById("asphalt-contractor").value = saved.asphalt.contractorIdx;
-    const amixRows = document.getElementById("asphalt-mix-rows");
-    amixRows.innerHTML = "";
+    // Build day-grouped asphalt sections
     asphaltMixRowCount = 0;
-    if (saved.asphalt && saved.asphalt.mixes && saved.asphalt.mixes.length) {
-      saved.asphalt.mixes.forEach(r => addAsphaltMixRow(r.mix, r.tonnes, r.time));
-    } else {
-      addAsphaltMixRow();
-    }
+    buildAsphaltDaySections(job, saved.asphalt && saved.asphalt.mixes);
 
     document.getElementById("order-confirmed-badge").style.display = saved._confirmed ? "inline-block" : "none";
     document.getElementById("btn-clear-order").style.display = "inline-block";
@@ -2119,19 +2132,11 @@ function openOrderModal(jobRef) {
       document.getElementById(s + "-body").classList.remove("open");
     });
 
-    const truckRowsEl = document.getElementById("truck-rows");
-    truckRowsEl.innerHTML = "";
-    truckRowCount = 0;
-    addTruckRow();
-
-    document.getElementById("profiler-1m").checked = false;
-    document.getElementById("profiler-2m").checked = false;
-    document.getElementById("chip-1m").classList.remove("selected");
-    document.getElementById("chip-2m").classList.remove("selected");
+    // Fresh day sections
+    buildTruckDaySections(job, null);
+    buildProfilerDaySections(job, null);
+    buildTCDaySections(job, null);
     document.getElementById("profiler-notes").value = "";
-
-    document.getElementById("tc-count").value = "";
-    document.getElementById("tc-utes").value  = "";
     document.getElementById("tc-notes").value = "";
     document.getElementById("core-notes").value = "";
     document.getElementById("asphalt-notes").value = "";
@@ -2139,14 +2144,10 @@ function openOrderModal(jobRef) {
     const _crewContact = CREW_CONTACTS[job.row] || {};
     document.getElementById("asphalt-contact").value = _crewContact.name  || "";
     document.getElementById("asphalt-phone").value   = _crewContact.phone || "";
-    const _amixRows = document.getElementById("asphalt-mix-rows");
-    if (_amixRows) {
-      _amixRows.innerHTML = "";
-      asphaltMixRowCount = 0;
-      // Refresh plant dropdown before adding mix row
-      populateContractorDropdowns();
-      addAsphaltMixRow();
-    }
+    // Build fresh day sections for new order
+    asphaltMixRowCount = 0;
+    populateContractorDropdowns();
+    buildAsphaltDaySections(job, null);
 
     document.getElementById("order-confirmed-badge").style.display = "none";
     document.getElementById("btn-clear-order").style.display = "none";
@@ -2177,20 +2178,17 @@ function renderConfirmationSection(job, savedOrder) {
   const items = [];
 
   // Build list of contractors that were ordered
-  if (savedOrder.trucks && savedOrder.trucks.enabled && savedOrder.trucks.rows) {
-    const grouped = {};
-    savedOrder.trucks.rows.forEach(r => {
-      if (r.qty > 0) {
-        const key = r.contractorIdx;
-        if (!grouped[key]) grouped[key] = { qty: 0, types: [] };
-        grouped[key].qty += r.qty;
-        if (!grouped[key].types.includes(r.truckType)) grouped[key].types.push(r.truckType);
-      }
-    });
-    Object.entries(grouped).forEach(([idx, info]) => {
-      const co = contractors.trucks[parseInt(idx)];
-      if (co) items.push({ key: "trucks_" + idx, label: co.name, sub: info.qty + " truck" + (info.qty !== 1 ? "s" : "") + " · " + info.types.join(", "), type: "Trucking" });
-    });
+  if (savedOrder.trucks && savedOrder.trucks.enabled) {
+    const co = contractors.trucks && contractors.trucks[savedOrder.trucks.contractorIdx];
+    if (co) {
+      // Summarise from days data
+      const days = savedOrder.trucks.days || {};
+      const allRows = Object.values(days).reduce((a, b) => a.concat(b), []);
+      const totalQty = allRows.reduce((s, r) => s + (parseInt(r.qty) || 0), 0);
+      const types = [...new Set(allRows.map(r => r.truckType).filter(Boolean))];
+      const sub = (totalQty > 0 ? totalQty + " truck" + (totalQty !== 1 ? "s" : "") : "Trucking") + (types.length ? " · " + types.join(", ") : "");
+      items.push({ key: "trucks_0", label: co.name, sub: sub, type: "Trucking" });
+    }
   }
   if (savedOrder.profiler && savedOrder.profiler.enabled) {
     const co = contractors.profiler[savedOrder.profiler.contractorIdx];
@@ -2210,7 +2208,9 @@ function renderConfirmationSection(job, savedOrder) {
   if (savedOrder.asphalt && savedOrder.asphalt.enabled) {
     const co = (contractors.asphalt || [])[savedOrder.asphalt.contractorIdx];
     if (co) {
-      const mixes = (savedOrder.asphalt.mixes || []).map(r => r.mix + (r.tonnes ? " " + r.tonnes + "T" : "")).join(", ");
+      const _mixData = savedOrder.asphalt.mixes || {};
+      const _allMixes = Array.isArray(_mixData) ? _mixData : Object.values(_mixData).reduce((a,b) => a.concat(b), []);
+      const mixes = _allMixes.map(r => r.mix + (r.tonnes ? " " + r.tonnes + "T" : "")).join(", ");
       const sub = "Asphalt" + (mixes ? " · " + mixes : "");
       items.push({ key: "asphalt", label: co.name, sub: "Asphalt" + (sub ? " · " + sub : ""), type: "Asphalt" });
     }
@@ -2238,6 +2238,8 @@ function renderConfirmationSection(job, savedOrder) {
       if (!ord) return;
       if (!ord.confirmations) ord.confirmations = {};
       ord.confirmations[item.key] = !ord.confirmations[item.key];
+      orders[job.id] = ord;
+      _sharedOrders = orders;
       saveOrders(orders);
       renderConfirmationSection(job, ord);
       render();
@@ -2253,14 +2255,10 @@ function renderConfirmationSection(job, savedOrder) {
       const keyParts = item.key.split("_");
       const type = keyParts[0];
 
-      if (type === "trucks" && ord.trucks && ord.trucks.rows) {
-        // Remove all truck rows for this contractor index
-        const contractorIdx = parseInt(keyParts[1]);
-        ord.trucks.rows = ord.trucks.rows.filter(function(r) {
-          return r.contractorIdx !== contractorIdx;
-        });
-        // If no rows left disable trucks entirely
-        if (ord.trucks.rows.length === 0) ord.trucks.enabled = false;
+      if (type === "trucks" && ord.trucks) {
+        // Disable trucking entirely
+        ord.trucks.enabled = false;
+        ord.trucks.days = {};
       } else if (type === "profiler" && ord.profiler) {
         ord.profiler.enabled = false;
         ord.profiler.contractorIdx = null;
@@ -2277,6 +2275,8 @@ function renderConfirmationSection(job, savedOrder) {
 
       // Clear confirmation
       if (ord.confirmations) delete ord.confirmations[item.key];
+      orders[job.id] = ord;
+      _sharedOrders = orders;
       saveOrders(orders);
       renderConfirmationSection(job, ord);
       render();
@@ -2292,10 +2292,11 @@ function renderConfirmationSection(job, savedOrder) {
 function populateContractorDropdowns() {
   const contractors = loadContractors();
   [
-    { id: "profiler-contractor",  key: "profiler" },
-    { id: "tc-contractor",        key: "tc"       },
-    { id: "core-contractor",      key: "core"     },
-    { id: "asphalt-contractor",   key: "asphalt"  },
+    { id: "truck-contractor-global", key: "trucks"  },
+    { id: "profiler-contractor",     key: "profiler" },
+    { id: "tc-contractor",           key: "tc"       },
+    { id: "core-contractor",         key: "core"     },
+    { id: "asphalt-contractor",      key: "asphalt"  },
   ].forEach(({ id, key }) => {
     const list = contractors[key] || [];
     const sel  = document.getElementById(id);
@@ -2349,7 +2350,8 @@ function addTruckRow(contractorIdx, truckType, qty) {
   div.querySelector(".truck-qty-input").addEventListener("input", updateOrderSummary);
   div.querySelector(".truck-type-select").addEventListener("change", updateOrderSummary);
 
-  document.getElementById("truck-rows").appendChild(div);
+  // truck-rows replaced by day sections — this is a legacy call, skip
+  // document.getElementById("truck-rows").appendChild(div);
   updateOrderSummary();
 }
 
@@ -2381,27 +2383,39 @@ function updateOrderSummary() {
   }
   if (document.getElementById("toggle-profiler").classList.contains("on")) {
     const sizes = [];
-    if (document.getElementById("profiler-1m").checked) sizes.push("1m");
-    if (document.getElementById("profiler-2m").checked) sizes.push("2m");
+    // Profiler sizes now per-day — check any day section
+    document.querySelectorAll(".profiler-day-1m:checked").forEach(function() { if (sizes.indexOf("1m") < 0) sizes.push("1m"); });
+    document.querySelectorAll(".profiler-day-2m:checked").forEach(function() { if (sizes.indexOf("2m") < 0) sizes.push("2m"); });
     parts.push(`🔧 Profiler${sizes.length ? " (" + sizes.join(" + ") + ")" : ""}`);
   }
   if (document.getElementById("toggle-tc").classList.contains("on")) {
-    const tcs  = document.getElementById("tc-count").value;
-    const utes = document.getElementById("tc-utes").value;
+    // TC counts now per-day
+    const _tcData = getTCDayData();
+    const _tcTotals = Object.values(_tcData).reduce((acc, d) => { acc.tcs += parseInt(d.count)||0; acc.utes += parseInt(d.utes)||0; return acc; }, {tcs:0, utes:0});
+    const tcs  = _tcTotals.tcs  || "";
+    const utes = _tcTotals.utes || "";
     parts.push(`🚦 TC${tcs ? " " + tcs + " TCs" : ""}${utes ? " + " + utes + " utes" : ""}`);
   }
   if (document.getElementById("toggle-core").classList.contains("on")) {
     parts.push("🔬 Core Testing");
   }
   if (document.getElementById("toggle-asphalt").classList.contains("on")) {
-    const mixRows = getAsphaltMixRows();
-    const totalT  = mixRows.reduce((s, r) => s + (parseFloat(r.tonnes) || 0), 0);
-    const mixList = mixRows.map(r => r.mix + (r.tonnes ? " " + r.tonnes + "T" : "")).filter(Boolean).join(", ");
+    const mixesByDate = getAsphaltMixRows();
+    // Flatten grouped object into flat array for summary
+    const _mixVal = (mixesByDate && typeof mixesByDate === "object" && !Array.isArray(mixesByDate)) ? mixesByDate : {};
+    const allMixRows = Object.values(_mixVal).reduce((acc, arr) => acc.concat(Array.isArray(arr) ? arr : []), []);
+    const totalT  = allMixRows.reduce((s, r) => s + (parseFloat(r.tonnes) || 0), 0);
+    const mixList = allMixRows.map(r => r.mix + (r.tonnes ? " " + r.tonnes + "T" : "")).filter(Boolean).join(", ");
     parts.push("⚫ Asphalt" + (mixList ? " · " + mixList : "") + (totalT > 0 ? " (" + totalT + "T total)" : ""));
   }
   // Main summary
   const truckOn = document.getElementById("toggle-trucks").classList.contains("on");
-  const { typeGroups, totalTrucks, totalTonnage } = truckOn ? calcTruckTotals() : { typeGroups:{}, totalTrucks:0, totalTonnage:0 };
+  // For summary, flatten all day truck rows
+  const _truckDays = truckOn ? getTruckDayData() : {};
+  const _allTruckRows = Object.values(_truckDays).reduce((a,b) => a.concat(b), []);
+  const typeGroups = _allTruckRows.reduce((acc, r) => { if(r.truckType && r.qty) acc[r.truckType] = (acc[r.truckType]||0)+r.qty; return acc; }, {});
+  const totalTrucks = Object.values(typeGroups).reduce((s,q) => s+q, 0);
+  const totalTonnage = _allTruckRows.reduce((s,r) => s+(r.qty||0)*(TRUCK_TONNAGE[r.truckType]||0), 0);
 
   // Summary line (without tonnage — shown separately)
   const truckParts = [];
@@ -2439,31 +2453,23 @@ function updateOrderSummary() {
     const body = document.getElementById(s + "-body");
     tog.classList.toggle("on");
     body.classList.toggle("open", tog.classList.contains("on"));
-    // When asphalt toggled ON, refresh mix dropdowns with current plant's mixes
+    // When asphalt toggled ON, populate contractor dropdown and rebuild day sections if empty
     if (s === "asphalt" && tog.classList.contains("on")) {
       populateContractorDropdowns();
-      document.querySelectorAll(".amix-type").forEach(sel => {
-        const cur = sel.value;
-        sel.innerHTML = buildMixOptions(cur);
-      });
+      // If no day sections built yet, build them now with parser pre-fill
+      const daysContainer = document.getElementById("asphalt-days-container");
+      if (daysContainer && daysContainer.querySelectorAll(".asphalt-day-section").length === 0 && currentOrderJob) {
+        asphaltMixRowCount = 0;
+        buildAsphaltDaySections(currentOrderJob, null);
+      }
     }
     updateOrderSummary();
   });
 });
 
-// Profiler chip toggles
-["1m","2m"].forEach(size => {
-  document.getElementById("chip-" + size).addEventListener("click", e => {
-    e.preventDefault();
-    const cb   = document.getElementById("profiler-" + size);
-    const chip = document.getElementById("chip-" + size);
-    cb.checked = !cb.checked;
-    chip.classList.toggle("selected", cb.checked);
-    updateOrderSummary();
-  });
-});
+// Profiler chip toggles removed — profiler is now per-day
 
-document.getElementById("btn-add-truck-row").addEventListener("click", () => addTruckRow());
+// btn-add-truck-row removed — each day has its own add button
 
 // ── Asphalt mix row system
 let asphaltMixRowCount = 0;
@@ -2484,43 +2490,448 @@ function buildMixOptions(selected) {
     mixes.map(m => `<option value="${esc(m)}" ${selected === m ? "selected" : ""}>${esc(m)}</option>`).join("");
 }
 
-function addAsphaltMixRow(mix, tonnes, time) {
+function addAsphaltMixRow(dayIndex, mix, tonnes, time) {
   // Add column headers if this is the first row
-  const container = document.getElementById("asphalt-mix-rows");
-  if (container && container.children.length === 0) {
+  const container = document.getElementById("amix-rows-" + dayIndex);
+  if (!container) return;
+
+  // Add column headers if first row
+  if (container.children.length === 0) {
     const hdr = document.createElement("div");
     hdr.style.cssText = "display:grid;grid-template-columns:1fr 100px 110px auto;gap:8px;padding:0 10px 4px;";
     hdr.innerHTML = ["Mix Type","Tonnes","Load-out Time",""].map(t =>
       `<span style="font-size:10px;font-weight:800;color:#6B7A99;text-transform:uppercase;letter-spacing:.05em;">${t}</span>`
     ).join("");
-    hdr.id = "amix-header";
     container.appendChild(hdr);
   }
+
   const rowId = "amix-row-" + (asphaltMixRowCount++);
   const div = document.createElement("div");
   div.className = "asphalt-mix-row";
+  div.dataset.day = dayIndex;
   div.id = rowId;
   div.innerHTML =
-    `<select class="amix-type">${buildMixOptions(mix || "")}</select>` +
+    `<input class="amix-type" type="text" placeholder="e.g. AC14 C320" value="${mix || ""}" />` +
     `<input class="amix-tonnes" type="number" min="0" step="0.5" placeholder="Tonnes" value="${tonnes || ""}" />` +
     `<input class="amix-time" type="time" value="${time || ""}" title="Load-out time" />` +
     `<button class="btn-remove-row" title="Remove">×</button>`;
-  div.querySelector(".btn-remove-row").addEventListener("click", () => { div.remove(); updateOrderSummary(); });
-  div.querySelector(".amix-type").addEventListener("change", updateOrderSummary);
-  div.querySelector(".amix-tonnes").addEventListener("input", updateOrderSummary);
-  document.getElementById("asphalt-mix-rows").appendChild(div);
+  div.querySelector(".btn-remove-row").addEventListener("click", () => { div.remove(); updateDayTotal(dayIndex); updateOrderSummary(); });
+  div.querySelector(".amix-type").addEventListener("input", () => { updateDayTotal(dayIndex); updateOrderSummary(); });
+  div.querySelector(".amix-tonnes").addEventListener("input", () => { updateDayTotal(dayIndex); updateOrderSummary(); });
+  container.appendChild(div);
+  updateDayTotal(dayIndex);
   updateOrderSummary();
 }
 
-function getAsphaltMixRows() {
-  return [...document.querySelectorAll(".asphalt-mix-row")].map(r => ({
-    mix:    r.querySelector(".amix-type").value,
-    tonnes: r.querySelector(".amix-tonnes").value,
-    time:   r.querySelector(".amix-time").value,
-  })).filter(r => r.mix || r.tonnes);
+function updateDayTotal(dayIndex) {
+  const container = document.getElementById("amix-rows-" + dayIndex);
+  const totalEl   = document.getElementById("amix-total-" + dayIndex);
+  if (!container || !totalEl) return;
+  const total = [...container.querySelectorAll(".amix-tonnes")]
+    .reduce((s, el) => s + (parseFloat(el.value) || 0), 0);
+  totalEl.textContent = total > 0 ? "Day total: " + total + "T" : "";
 }
 
-document.getElementById("btn-add-asphalt-mix").addEventListener("click", () => addAsphaltMixRow());
+// ─── SHARED DAY DATES HELPER ─────────────────────────────────────────────────
+function getJobDates(job) {
+  const dates = [];
+  if (!job || !job.startDate) return dates;
+  try {
+    const start = new Date(job.startDate + "T12:00:00");
+    const end   = new Date((job.endDate || job.startDate) + "T12:00:00");
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      dates.push({ date: new Date(d), key: d.toISOString().slice(0,10),
+        label: d.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" }) });
+      if (dates.length > 30) break;
+    }
+  } catch(e) {}
+  return dates;
+}
+
+// ─── TRUCK DAY SECTIONS ───────────────────────────────────────────────────────
+function buildTruckDaySections(job, savedDays) {
+  const container = document.getElementById("truck-days-container");
+  if (!container) return;
+  container.innerHTML = "";
+  const dates = getJobDates(job);
+  if (dates.length === 0) return;
+
+  dates.forEach(function(d) {
+    const saved = savedDays && savedDays[d.key] ? savedDays[d.key] : [];
+    const section = document.createElement("div");
+    section.className = "day-breakdown-section";
+    section.dataset.datekey = d.key;
+    section.innerHTML =
+      `<div class="day-breakdown-label">${d.label}</div>` +
+      `<div class="truck-day-rows" id="truck-day-rows-${d.key}"></div>` +
+      `<button class="btn-add-row" data-datekey="${d.key}" style="margin-top:4px;">+ Add Truck Type</button>`;
+    container.appendChild(section);
+
+    section.querySelector(".btn-add-row").addEventListener("click", function() {
+      addTruckDayRow(d.key, "", 1);
+    });
+
+    if (saved.length > 0) {
+      saved.forEach(function(r) { addTruckDayRow(d.key, r.truckType, r.qty); });
+    } else {
+      addTruckDayRow(d.key, "", 1);
+    }
+  });
+}
+
+function addTruckDayRow(dateKey, truckType, qty) {
+  const container = document.getElementById("truck-day-rows-" + dateKey);
+  if (!container) return;
+  const div = document.createElement("div");
+  div.style.cssText = "display:grid;grid-template-columns:1fr 80px auto;gap:6px;align-items:center;margin-bottom:4px;";
+  div.innerHTML =
+    `<select class="truck-day-type" style="padding:6px 8px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;">` +
+    `<option value="">Select truck type</option>` +
+    Object.keys(TRUCK_TONNAGE).map(t => `<option value="${t}"${t === truckType ? " selected" : ""}>${t}</option>`).join("") +
+    `</select>` +
+    `<input class="truck-day-qty" type="number" min="1" value="${qty || 1}" placeholder="Qty" style="padding:6px 8px;border:1.5px solid #DDE3EE;border-radius:7px;font-size:12px;font-family:inherit;" />` +
+    `<button class="btn-remove-row" style="padding:4px 8px;">×</button>`;
+  div.querySelector(".btn-remove-row").addEventListener("click", function() { div.remove(); updateOrderSummary(); });
+  div.querySelector(".truck-day-type").addEventListener("change", updateOrderSummary);
+  div.querySelector(".truck-day-qty").addEventListener("input", updateOrderSummary);
+  container.appendChild(div);
+  updateOrderSummary();
+}
+
+function getTruckDayData() {
+  const result = {};
+  document.querySelectorAll(".day-breakdown-section[data-datekey]").forEach(function(section) {
+    const key = section.dataset.datekey;
+    if (!document.getElementById("truck-day-rows-" + key)) return;
+    const rows = [...section.querySelectorAll(".truck-day-rows > div")].map(function(row) {
+      return { truckType: row.querySelector(".truck-day-type").value, qty: parseInt(row.querySelector(".truck-day-qty").value) || 1 };
+    }).filter(function(r) { return r.truckType; });
+    if (rows.length > 0) result[key] = rows;
+  });
+  return result;
+}
+
+// ─── PROFILER DAY SECTIONS ────────────────────────────────────────────────────
+function buildProfilerDaySections(job, savedDays) {
+  const container = document.getElementById("profiler-days-container");
+  if (!container) return;
+  container.innerHTML = "";
+  const dates = getJobDates(job);
+  if (dates.length === 0) return;
+
+  dates.forEach(function(d) {
+    const saved = savedDays && savedDays[d.key] ? savedDays[d.key] : {};
+    const section = document.createElement("div");
+    section.className = "day-breakdown-section";
+    section.dataset.datekey = d.key;
+    const req1m = saved.size1m ? "checked" : "";
+    const req2m = saved.size2m ? "checked" : "";
+    const needed = saved.needed !== false;
+    section.innerHTML =
+      `<div class="day-breakdown-label">` +
+        `<input type="checkbox" class="profiler-day-needed" id="profiler-needed-${d.key}" ${needed ? "checked" : ""} />` +
+        `<label for="profiler-needed-${d.key}" style="cursor:pointer;">${d.label}</label>` +
+      `</div>` +
+      `<div class="profiler-day-options" id="profiler-opts-${d.key}" style="${needed ? "" : "display:none;"}">` +
+        `<div class="profiler-options" style="margin-top:4px;">` +
+          `<label class="profiler-chip${req1m ? " selected" : ""}" style="margin-right:6px;"><input type="checkbox" class="profiler-day-1m" ${req1m} style="display:none;"> 1m Profiler</label>` +
+          `<label class="profiler-chip${req2m ? " selected" : ""}"><input type="checkbox" class="profiler-day-2m" ${req2m} style="display:none;"> 2m Profiler</label>` +
+        `</div>` +
+      `</div>`;
+    container.appendChild(section);
+
+    // Toggle options visibility
+    section.querySelector(".profiler-day-needed").addEventListener("change", function() {
+      document.getElementById("profiler-opts-" + d.key).style.display = this.checked ? "" : "none";
+      updateOrderSummary();
+    });
+
+    // Chip toggle styling
+    section.querySelectorAll(".profiler-chip").forEach(function(chip) {
+      chip.addEventListener("click", function() {
+        const cb = chip.querySelector("input");
+        setTimeout(function() { chip.classList.toggle("selected", cb.checked); updateOrderSummary(); }, 0);
+      });
+    });
+  });
+}
+
+function getProfilerDayData() {
+  const result = {};
+  document.querySelectorAll("#profiler-days-container .day-breakdown-section").forEach(function(section) {
+    const key    = section.dataset.datekey;
+    const needed = section.querySelector(".profiler-day-needed").checked;
+    const size1m = needed && section.querySelector(".profiler-day-1m") && section.querySelector(".profiler-day-1m").checked;
+    const size2m = needed && section.querySelector(".profiler-day-2m") && section.querySelector(".profiler-day-2m").checked;
+    result[key]  = { needed: needed, size1m: !!size1m, size2m: !!size2m };
+  });
+  return result;
+}
+
+// ─── TC DAY SECTIONS ──────────────────────────────────────────────────────────
+function buildTCDaySections(job, savedDays) {
+  const container = document.getElementById("tc-days-container");
+  if (!container) return;
+  container.innerHTML = "";
+  const dates = getJobDates(job);
+  if (dates.length === 0) return;
+
+  dates.forEach(function(d) {
+    const saved = savedDays && savedDays[d.key] ? savedDays[d.key] : {};
+    const section = document.createElement("div");
+    section.className = "day-breakdown-section";
+    section.dataset.datekey = d.key;
+    section.innerHTML =
+      `<div class="day-breakdown-label">${d.label}</div>` +
+      `<div class="tc-counts" style="margin-top:4px;">` +
+        `<div class="tc-count-field"><label>No. of TCs</label><input type="number" class="tc-day-count" min="0" placeholder="0" value="${saved.count || ""}" /></div>` +
+        `<div class="tc-count-field"><label>No. of Utes</label><input type="number" class="tc-day-utes" min="0" placeholder="0" value="${saved.utes || ""}" /></div>` +
+      `</div>`;
+    container.appendChild(section);
+    section.querySelector(".tc-day-count").addEventListener("input", updateOrderSummary);
+    section.querySelector(".tc-day-utes").addEventListener("input", updateOrderSummary);
+  });
+}
+
+function getTCDayData() {
+  const result = {};
+  document.querySelectorAll("#tc-days-container .day-breakdown-section").forEach(function(section) {
+    const key   = section.dataset.datekey;
+    const count = section.querySelector(".tc-day-count").value;
+    const utes  = section.querySelector(".tc-day-utes").value;
+    if (count || utes) result[key] = { count: count, utes: utes };
+  });
+  return result;
+}
+
+// ─── ASPHALT DESCRIPTION PARSER ─────────────────────────────────────────────
+function parseAsphaltFromDescription(text) {
+  if (!text) return [];
+  var results = [];
+  var isVirgin = /virgin/i.test(text);
+
+  function rap(str) {
+    return isVirgin ? str : str + ' RAP';
+  }
+
+  function normaliseMix(base, binder) {
+    // Normalise base
+    var b = base.trim().replace(/\s+/g, ' ');
+    b = b.replace(/Type\s*(\d)/i, 'Type $1');
+    b = b.replace(/AC14H/i, 'AC14H');
+    // Normalise binder — 320 shorthand = C320
+    var bn = (binder || '').trim();
+    if (bn === '320') bn = 'C320';
+    if (bn) return rap(b + ' ' + bn);
+    return rap(b);
+  }
+
+  function addResult(mix, tonnes) {
+    if (!mix) return;
+    var key = mix + '|' + (tonnes || '');
+    if (results.find(function(r) { return r.mix + '|' + r.tonnes === key; })) return;
+    results.push({ mix: mix, tonnes: tonnes || '' });
+  }
+
+  // Base types regex string
+  var BASE = '(?:AC\\d+[A-Z]?|EME2?|DG\\d+|Type\\s*\\d+|B[34])';
+  // Binder regex string
+  var BIND = '(?:C320|A15E|Multigrade|M1000|C170|320)';
+  // Full mix = BASE optionally followed by BIND
+  var FULL = BASE + '(?:\\s+' + BIND + ')?';
+
+  var t = text.replace(/\t/g, ' ');
+  var lines = t.split('\n');
+
+  lines.forEach(function(line) {
+    var l = line.trim();
+    if (!l) return;
+
+    // ── DTMR split: "90/50 DTMR EME2/AC14 (C320)" ───────────────────────────
+    var re1 = /\d+\/\d+\s+DTMR\s+(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+)\s*\/\s*(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+)\s*(?:\(([A-Z0-9]+)\))?/i;
+    var m = l.match(re1);
+    if (m) {
+      var binder = m[3] || '';
+      // Find tonnage splits like "18t EME2 & 10t AC14"
+      var splitRe = /(\d+(?:\.\d+)?)\s*[tT]\s*(?:[-–]\s*)?(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+)/gi;
+      var splits = [], sm;
+      while ((sm = splitRe.exec(l)) !== null) splits.push({ tonnes: sm[1], base: sm[2] });
+      if (splits.length >= 2) {
+        splits.forEach(function(s) { addResult(normaliseMix(s.base, binder), s.tonnes); });
+      } else {
+        var tMatch = l.match(/(\d+(?:\.\d+)?)\s*[tT]\b/);
+        addResult(normaliseMix(m[1], binder), tMatch ? tMatch[1] : '');
+        addResult(normaliseMix(m[2], binder), '');
+      }
+      return;
+    }
+
+    // ── DTMR single: "50/50 DTMR AC14 (C320)" ───────────────────────────────
+    var re2 = /\d+\/\d+\s+DTMR\s+(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+)\s*(?:\(([A-Z0-9]+)\))?/i;
+    m = l.match(re2);
+    if (m) {
+      var tMatch = l.match(/(\d+(?:\.\d+)?)\s*[tT]\b/);
+      addResult(normaliseMix(m[1], m[2] || ''), tMatch ? tMatch[1] : '');
+      return;
+    }
+
+    // ── Multiple "Xt MIX & Xt MIX" on same line ─────────────────────────────
+    var multiRe = /(\d+(?:\.\d+)?)\s*[tT]\s*(?:[-–]\s*)?(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+|B[34])(?:\s+(C320|A15E|Multigrade|M1000|C170|320))?/gi;
+    var multiMatches = [], mm;
+    while ((mm = multiRe.exec(l)) !== null) multiMatches.push({ tonnes: mm[1], base: mm[2], binder: mm[3] || '' });
+    if (multiMatches.length > 1) {
+      multiMatches.forEach(function(x) { addResult(normaliseMix(x.base, x.binder), x.tonnes); });
+      return;
+    }
+
+    // ── "approx. Xt of MIX BINDER" ──────────────────────────────────────────
+    var approxRe = /(?:approx\.?\s+)?(\d[\d,]*(?:\.\d+)?)\s*(?:t|T|tonnes?)\s+(?:of\s+)?(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+|B[34])(?:\s+(C320|A15E|Multigrade|M1000|C170|320))?/gi;
+    var am;
+    while ((am = approxRe.exec(l)) !== null) {
+      addResult(normaliseMix(am[2], am[3] || ''), am[1].replace(/,/g, ''));
+    }
+
+    // ── "MIX BINDER - Xt" ────────────────────────────────────────────────────
+    var re3 = /(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+|B[34])(?:\s+(C320|A15E|Multigrade|M1000|C170|320))?\s*[-–]\s*(\d+(?:\.\d+)?)\s*[tT]\b/gi;
+    while ((am = re3.exec(l)) !== null) {
+      addResult(normaliseMix(am[1], am[2] || ''), am[3]);
+    }
+
+    // ── "Xt - MIX BINDER" or "Xt MIX BINDER" ────────────────────────────────
+    var re4 = /(\d+(?:\.\d+)?)\s*[tT]\s*(?:[-\u2013]\s*)?(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+|B[34])(?:\s+(C320|A15E|Multigrade|M1000|C170|320))?(?:\s+(?:asphalt|mix))?/gi;
+    var re4pre = /(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+|B[34])\s+(C320|A15E|Multigrade|M1000|C170|320)\s*(?:asphalt|mix)?\s*[-\u2013]\s*(\d+(?:\.\d+)?)\s*[tT]\b/gi;
+    while ((am = re4pre.exec(l)) !== null) { addResult(normaliseMix(am[1], am[2]), am[3]); }
+    while ((am = re4.exec(l)) !== null) {
+      addResult(normaliseMix(am[2], am[3] || ''), am[1]);
+    }
+
+    // ── "Type X 320" shorthand (320 as standalone binder after Type) ──────────
+    var re4b = /(Type\s*\d+)\s+(320)\s+(?:asphalt\s+)?[-–]\s*(\d+(?:\.\d+)?)\s*[tT]/gi;
+    while ((am = re4b.exec(l)) !== null) {
+      addResult(normaliseMix(am[1], am[2]), am[3]);
+    }
+    var re4c = /(\d+(?:\.\d+)?)\s*[tT]\s*(?:[-–]\s*)?(Type\s*\d+)\s+(320)/gi;
+    while ((am = re4c.exec(l)) !== null) {
+      addResult(normaliseMix(am[2], am[3]), am[1]);
+    }
+
+    // ── "@ Xmm MIX BINDER - Xt" ─────────────────────────────────────────────
+    var re5 = /\d+mm\s+(AC\d+[A-Z]?|EME2?|DG\d+|Type\s*\d+|B[34])(?:\s+(C320|A15E|Multigrade|M1000|C170|320))?\s*[-–]\s*(\d+(?:\.\d+)?)\s*[tT]\b/gi;
+    while ((am = re5.exec(l)) !== null) {
+      addResult(normaliseMix(am[1], am[2] || ''), am[3]);
+    }
+
+    // ── "B3 C320 @ Xmm" with tonnage elsewhere on line ──────────────────────
+    var re6 = /(B[34])\s+(C320|A15E|Multigrade|320)/i;
+    m = l.match(re6);
+    if (m) {
+      var tMatch = l.match(/(\d[\d,]*(?:\.\d+)?)\s*[tT]\b/);
+      if (tMatch) addResult(normaliseMix(m[1], m[2]), tMatch[1].replace(/,/g, ''));
+    }
+  });
+
+  // Final dedup
+  var seen = {};
+  return results.filter(function(r) {
+    var key = r.mix + '|' + r.tonnes;
+    if (seen[key]) return false;
+    seen[key] = true;
+    return !!r.mix;
+  }).slice(0, 15);
+}
+
+function buildAsphaltDaySections(job, savedMixes) {
+  const container = document.getElementById("asphalt-days-container");
+  if (!container) return;
+  container.innerHTML = "";
+
+  // Safety check - ensure we have valid dates
+  if (!job || !job.startDate) {
+    addAsphaltMixRow(0, "", "", "");
+    return;
+  }
+
+  // Get all dates for this job
+  const dates = [];
+  try {
+    const start = new Date(job.startDate + "T12:00:00");
+    const end   = new Date((job.endDate || job.startDate) + "T12:00:00");
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      dates.push(new Date(d));
+      if (dates.length > 30) break; // safety limit
+    }
+  } catch(e) {
+    console.error("buildAsphaltDaySections date error:", e);
+    return;
+  }
+
+  dates.forEach(function(date, idx) {
+    const dateKey = date.toISOString().slice(0,10);
+    const label   = date.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" });
+
+    const section = document.createElement("div");
+    section.className = "asphalt-day-section";
+    section.innerHTML =
+      `<div class="asphalt-day-label">${label}</div>` +
+      `<div id="amix-rows-${idx}"></div>` +
+      `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">` +
+        `<span class="asphalt-day-total" id="amix-total-${idx}"></span>` +
+        `<button class="btn-add-row" data-day="${idx}" style="margin:0;">+ Add Mix</button>` +
+      `</div>`;
+    container.appendChild(section);
+
+    section.querySelector(".btn-add-row").addEventListener("click", function() {
+      addAsphaltMixRow(idx, "", "", "");
+    });
+
+    // Load saved mixes for this date, or parse from description if no saved data
+    const saved = savedMixes ? (savedMixes[dateKey] || []) : [];
+    if (saved.length > 0) {
+      saved.forEach(function(r) { addAsphaltMixRow(idx, r.mix, r.tonnes, r.time); });
+    } else if (idx === 0 && !savedMixes) {
+      // First day and no saved order — try to parse from job description
+      const parsed = parseAsphaltFromDescription(job.notes || job.description || '');
+      if (parsed.length > 0) {
+        parsed.forEach(function(r) { addAsphaltMixRow(idx, r.mix, r.tonnes, ''); });
+      } else {
+        addAsphaltMixRow(idx, "", "", "");
+      }
+    } else {
+      addAsphaltMixRow(idx, "", "", "");
+    }
+  });
+}
+
+function getAsphaltMixRows() {
+  // Returns mixes grouped by date key
+  const container = document.getElementById("asphalt-days-container");
+  if (!container) return {};
+  // Safety: if no day sections yet, return empty object
+  if (container.querySelectorAll(".asphalt-day-section").length === 0) return {};
+  const result = {};
+  container.querySelectorAll(".asphalt-day-section").forEach(function(section, idx) {
+    const label = section.querySelector(".asphalt-day-label").textContent;
+    // Get date from currentOrderJob
+    const job   = currentOrderJob;
+    const start = new Date(job.startDate + "T12:00:00");
+    const d     = new Date(start);
+    d.setDate(d.getDate() + idx);
+    const dateKey = d.toISOString().slice(0,10);
+    const rows = [...section.querySelectorAll(".asphalt-mix-row")].map(function(r) {
+      return {
+        mix:    r.querySelector(".amix-type").value,
+        tonnes: r.querySelector(".amix-tonnes").value,
+        time:   r.querySelector(".amix-time").value,
+        date:   dateKey,
+        label:  label
+      };
+    }).filter(function(r) { return r.mix || r.tonnes; });
+    if (rows.length > 0) result[dateKey] = rows;
+  });
+  return result;
+}
+
+// btn-add-asphalt-mix removed - each day section has its own add button
 
 // When plant changes, rebuild mix dropdowns
 document.getElementById("asphalt-contractor").addEventListener("change", () => {
@@ -2535,8 +2946,7 @@ document.getElementById("order-close-btn").addEventListener("click", closeOrderM
 document.getElementById("order-overlay").addEventListener("click", e => {
   if (e.target === document.getElementById("order-overlay")) closeOrderModal();
 });
-document.getElementById("tc-count").addEventListener("input", updateOrderSummary);
-document.getElementById("tc-utes").addEventListener("input", updateOrderSummary);
+// tc-count and tc-utes listeners removed — now handled per day section
 
 // ─── SAVE & SEND ORDER ────────────────────────────────────────────────────────
 function gatherOrderEmails() {
@@ -2550,9 +2960,17 @@ function gatherOrderEmails() {
   })).filter(r => r.qty > 0);
   const orderData = {
     _confirmed: true,
-    trucks: { enabled: document.getElementById("toggle-trucks").classList.contains("on"), rows: truckRows },
-    profiler: { enabled: document.getElementById("toggle-profiler").classList.contains("on"), contractorIdx: parseInt(document.getElementById("profiler-contractor").value)||0, size1m: document.getElementById("profiler-1m").checked, size2m: document.getElementById("profiler-2m").checked, notes: document.getElementById("profiler-notes").value.trim() },
-    tc: { enabled: document.getElementById("toggle-tc").classList.contains("on"), contractorIdx: parseInt(document.getElementById("tc-contractor").value)||0, count: document.getElementById("tc-count").value, utes: document.getElementById("tc-utes").value, notes: document.getElementById("tc-notes").value.trim() },
+    trucks:  { enabled: document.getElementById("toggle-trucks").classList.contains("on"),
+               contractorIdx: parseInt((document.getElementById("truck-contractor-global") || {}).value)||0,
+               days: getTruckDayData() },
+    profiler: { enabled: document.getElementById("toggle-profiler").classList.contains("on"),
+                contractorIdx: parseInt(document.getElementById("profiler-contractor").value)||0,
+                days: getProfilerDayData(),
+                notes: document.getElementById("profiler-notes").value.trim() },
+    tc:       { enabled: document.getElementById("toggle-tc").classList.contains("on"),
+                contractorIdx: parseInt(document.getElementById("tc-contractor").value)||0,
+                days: getTCDayData(),
+                notes: document.getElementById("tc-notes").value.trim() },
     core:    { enabled: document.getElementById("toggle-core").classList.contains("on"), contractorIdx: parseInt(document.getElementById("core-contractor").value)||0, notes: document.getElementById("core-notes").value.trim() },
     asphalt: { enabled: document.getElementById("toggle-asphalt").classList.contains("on"), contractorIdx: parseInt(document.getElementById("asphalt-contractor").value)||0, mixes: getAsphaltMixRows(), contact: document.getElementById("asphalt-contact").value.trim(), phone: document.getElementById("asphalt-phone").value.trim(), notes: document.getElementById("asphalt-notes").value.trim() },
   };
@@ -2565,29 +2983,25 @@ function gatherOrderEmails() {
   const freshOrder = loadOrders()[job.id];
   if (freshOrder) renderConfirmationSection(job, freshOrder);
   const emails = [];
-  if (orderData.trucks.enabled && truckRows.length) {
-    const grouped = {};
-    truckRows.forEach(r => { if (!grouped[r.contractorIdx]) grouped[r.contractorIdx]=0; grouped[r.contractorIdx]+=r.qty; });
-    Object.entries(grouped).forEach(([idx, qty]) => {
-      const co = contractors.trucks[parseInt(idx)];
-      if (co && co.email) emails.push({ type:"Trucking", contractor:co, subject:"Truck Booking Request - "+formatDisplayDate(job.startDate), body:buildTruckEmail(job,co,qty,truckRows.filter(r=>r.contractorIdx==parseInt(idx))) });
-    });
+  if (orderData.trucks.enabled) {
+    const co = contractors.trucks[orderData.trucks.contractorIdx];
+    if (co && co.email) emails.push({ type:"Trucking", contractor:co, subject:"Truck Booking Request - "+buildDateRange(job), body:buildTruckEmail(job,co,null,orderData.trucks.days) });
   }
   if (orderData.profiler.enabled) {
     const co = contractors.profiler[orderData.profiler.contractorIdx];
-    if (co && co.email) emails.push({ type:"Profiler", contractor:co, subject:"Profiler Booking Request - "+formatDisplayDate(job.startDate), body:buildProfilerEmail(job,co,orderData.profiler) });
+    if (co && co.email) emails.push({ type:"Profiler", contractor:co, subject:"Profiler Booking Request - "+buildDateRange(job), body:buildProfilerEmail(job,co,orderData.profiler) });
   }
   if (orderData.tc.enabled) {
     const co = contractors.tc[orderData.tc.contractorIdx];
-    if (co && co.email) emails.push({ type:"Traffic Control", contractor:co, subject:"Traffic Control Booking Request - "+formatDisplayDate(job.startDate), body:buildTCEmail(job,co,orderData.tc) });
+    if (co && co.email) emails.push({ type:"Traffic Control", contractor:co, subject:"Traffic Control Booking Request - "+buildDateRange(job), body:buildTCEmail(job,co,orderData.tc) });
   }
   if (orderData.core && orderData.core.enabled) {
     const co = (contractors.core || [])[orderData.core.contractorIdx];
-    if (co && co.email) emails.push({ type:"Core Testing", contractor:co, subject:"Core Testing Request - "+formatDisplayDate(job.startDate), body:buildCoreEmail(job,co,orderData.core) });
+    if (co && co.email) emails.push({ type:"Core Testing", contractor:co, subject:"Core Testing Request - "+buildDateRange(job), body:buildCoreEmail(job,co,orderData.core) });
   }
   if (orderData.asphalt && orderData.asphalt.enabled) {
     const co = (contractors.asphalt || [])[orderData.asphalt.contractorIdx];
-    if (co && co.email) emails.push({ type:"Asphalt", contractor:co, subject:"Asphalt Order - "+formatDisplayDate(job.startDate), body:buildAsphaltEmail(job,co,orderData.asphalt) });
+    if (co && co.email) emails.push({ type:"Asphalt", contractor:co, subject:"Asphalt Order - "+buildDateRange(job), body:buildAsphaltEmail(job,co,orderData.asphalt) });
   }
   return emails;
 }
@@ -2746,6 +3160,13 @@ function sendViaOutlook({ to, subject, body }) {
   return true;
 }
 // ─── EMAIL BUILDERS ───────────────────────────────────────────────────────────
+function buildDateRange(job) {
+  const start = formatDisplayDate(job.startDate);
+  if (!job.endDate || job.endDate === job.startDate) return start;
+  const end = formatDisplayDate(job.endDate);
+  return start + " - " + end;
+}
+
 function buildTruckEmail(job, contractor, qty, truckRows) {
   truckRows = truckRows || [];
   const dur = dateDiffDays(job.startDate, job.endDate) + 1;
@@ -2845,60 +3266,15 @@ function buildTCEmail(job, contractor, tc) {
   return lines.join("\n");
 }
 
-function buildAsphaltEmail(job, contractor, asphalt) {
-  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
-  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  const mixes = asphalt.mixes || [];
-  const totalT = mixes.reduce((s, r) => s + (parseFloat(r.tonnes) || 0), 0);
-  const lines = [];
-  lines.push("Hi " + (contractor.name || "there") + ",");
-  lines.push("");
-  lines.push("Hope you are well. Could I please make a booking for the following asphalt order:");
-  lines.push("");
-  lines.push("Date:              " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
-  lines.push("Location:          " + (job.location || "TBA"));
-  if (job.jobRef) lines.push("Job Ref:           " + job.jobRef);
-  lines.push("Client:            " + (job.title || "TBA"));
-  lines.push("");
-  lines.push("Mix Order:");
-  if (mixes.length > 0) {
-    mixes.forEach(function(r) {
-      const timePart = r.time ? "   Load-out: " + r.time : "";
-      lines.push("  • " + (r.mix || "TBA") + (r.tonnes ? "   " + r.tonnes + "T" : "") + timePart);
-    });
-    if (totalT > 0) lines.push("");
-    if (totalT > 0) lines.push("  Total:  " + totalT + "T");
-  } else {
-    lines.push("  TBA");
-  }
-  lines.push("");
-  if (asphalt.contact || asphalt.phone) {
-    lines.push("Site Contact:      " + [asphalt.contact, asphalt.phone].filter(Boolean).join("  |  "));
-    lines.push("");
-  }
-  if (asphalt.notes) {
-    lines.push("Notes:");
-    lines.push(asphalt.notes);
-    lines.push("");
-  }
-  lines.push("Please ensure all material is delivered to site on time and that drivers are briefed on site access requirements. Testing certificates will be required for all loads.");
-  lines.push("");
-  lines.push("Could you please confirm you can accommodate this order?");
-  lines.push("");
-  lines.push("Please do not hesitate to contact me should you have any queries.");
-  lines.push("");
-
-  return lines.join("\n");
+function buildDateRange(job) {
+  const start = formatDisplayDate(job.startDate);
+  if (!job.endDate || job.endDate === job.startDate) return start;
+  const end = formatDisplayDate(job.endDate);
+  return start + " - " + end;
 }
 
-function buildTruckEmail(job, contractor, qty, truckRows) {
-  truckRows = truckRows || [];
-  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
-  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  const truckBreakdown = Object.entries(
-    truckRows.reduce((acc, r) => { if(r.qty>0){acc[r.truckType]=(acc[r.truckType]||0)+r.qty;} return acc; }, {})
-  ).map(([t,q]) => "  - " + q + "x " + t + (q > 1 ? "s" : "")).join("\n");
-  const totalTonnage = truckRows.reduce((s,r)=>s+(r.qty||0)*(TRUCK_TONNAGE[r.truckType]||0),0);
+function buildTruckEmail(job, contractor, qty, truckDays) {
+  const dateStr = buildDateRange(job);
   const lines = [];
   lines.push("Cartage Booking Request");
   lines.push("");
@@ -2906,21 +3282,56 @@ function buildTruckEmail(job, contractor, qty, truckRows) {
   lines.push("Location:    " + (job.location || "TBA"));
   if (job.jobRef) lines.push("Job Ref:     " + job.jobRef);
   lines.push("");
-  lines.push("Trucks Required:");
-  lines.push(truckBreakdown);
-  lines.push("");
-  lines.push("Total Estimated Cartage:  " + totalTonnage + "T");
+
+  // truckDays can be old flat array or new day-grouped object
+  var grandTotal = 0;
+  if (truckDays && typeof truckDays === "object" && !Array.isArray(truckDays)) {
+    const dateKeys = Object.keys(truckDays).sort();
+    if (dateKeys.length > 1) {
+      // Multi-day breakdown
+      dateKeys.forEach(function(dateKey) {
+        const dayRows = truckDays[dateKey] || [];
+        if (dayRows.length === 0) return;
+        const dayLabel = new Date(dateKey + "T12:00:00").toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" });
+        const dayTonnage = dayRows.reduce((s,r)=>s+(r.qty||0)*(TRUCK_TONNAGE[r.truckType]||0),0);
+        grandTotal += dayTonnage;
+        const breakdown = Object.entries(dayRows.reduce((acc,r)=>{if(r.qty>0){acc[r.truckType]=(acc[r.truckType]||0)+r.qty;}return acc;},{}))
+          .map(([t,q])=>"  - "+q+"x "+t+(q>1?"s":"")).join("\n");
+        lines.push(dayLabel + (dayTonnage > 0 ? "  (~" + dayTonnage + "T)" : "") + ":");
+        lines.push(breakdown);
+        lines.push("");
+      });
+      lines.push("Total Estimated Cartage:  " + grandTotal + "T");
+    } else {
+      // Single day
+      const dayRows = Object.values(truckDays)[0] || [];
+      const breakdown = Object.entries(dayRows.reduce((acc,r)=>{if(r.qty>0){acc[r.truckType]=(acc[r.truckType]||0)+r.qty;}return acc;},{}))
+        .map(([t,q])=>"  - "+q+"x "+t+(q>1?"s":"")).join("\n");
+      grandTotal = dayRows.reduce((s,r)=>s+(r.qty||0)*(TRUCK_TONNAGE[r.truckType]||0),0);
+      lines.push("Trucks Required:");
+      lines.push(breakdown);
+      lines.push("");
+      lines.push("Total Estimated Cartage:  " + grandTotal + "T");
+    }
+  } else {
+    // Legacy flat array
+    const flat = Array.isArray(truckDays) ? truckDays : [];
+    const breakdown = Object.entries(flat.reduce((acc,r)=>{if(r.qty>0){acc[r.truckType]=(acc[r.truckType]||0)+r.qty;}return acc;},{}))
+      .map(([t,q])=>"  - "+q+"x "+t+(q>1?"s":"")).join("\n");
+    grandTotal = flat.reduce((s,r)=>s+(r.qty||0)*(TRUCK_TONNAGE[r.truckType]||0),0);
+    lines.push("Trucks Required:");
+    lines.push(breakdown);
+    lines.push("");
+    lines.push("Total Estimated Cartage:  " + grandTotal + "T");
+  }
+
   lines.push("");
   lines.push("Please confirm your availability.");
   return lines.join("\n");
 }
 
 function buildProfilerEmail(job, contractor, profiler) {
-  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
-  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  const sizeList = [profiler.size1m ? "1m" : "", profiler.size2m ? "2m" : ""].filter(Boolean);
-  const sizeCount = sizeList.length;
-  const sizeStr = sizeList.join(" and ");
+  const dateStr = buildDateRange(job);
   const lines = [];
   lines.push("Profiling Booking Request");
   lines.push("");
@@ -2928,8 +3339,31 @@ function buildProfilerEmail(job, contractor, profiler) {
   lines.push("Location:    " + (job.location || "TBA"));
   if (job.jobRef) lines.push("Job Ref:     " + job.jobRef);
   lines.push("");
-  lines.push("Equipment Required:");
-  lines.push("  - " + (sizeCount > 1 ? sizeCount + "x Profilers (" + sizeStr + ")" : (sizeStr ? sizeStr + " Profiler" : "Profiler TBA")));
+
+  // Per-day profiler breakdown
+  const days = profiler.days || {};
+  const dateKeys = Object.keys(days).sort();
+  if (dateKeys.length > 1) {
+    lines.push("Profiling Required:");
+    dateKeys.forEach(function(dateKey) {
+      const d = days[dateKey];
+      if (!d) return;
+      const dayLabel = new Date(dateKey + "T12:00:00").toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" });
+      if (!d.needed) {
+        lines.push("  " + dayLabel + ":  Not required");
+      } else {
+        const sizes = [d.size1m ? "1m" : "", d.size2m ? "2m" : ""].filter(Boolean).join(" and ");
+        lines.push("  " + dayLabel + ":  " + (sizes ? sizes + " Profiler" : "Required"));
+      }
+    });
+  } else {
+    // Single day or legacy
+    const sizeList = [profiler.size1m ? "1m" : "", profiler.size2m ? "2m" : ""].filter(Boolean);
+    const sizeStr  = sizeList.join(" and ");
+    lines.push("Equipment Required:");
+    lines.push("  - " + (sizeStr ? sizeStr + " Profiler" : "Profiler TBA"));
+  }
+
   if (profiler.notes) {
     lines.push("");
     lines.push(profiler.notes);
@@ -2940,12 +3374,7 @@ function buildProfilerEmail(job, contractor, profiler) {
 }
 
 function buildTCEmail(job, contractor, tc) {
-  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
-  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  const tcNum = parseInt(tc.count) || 0;
-  const uteNum = parseInt(tc.utes) || 0;
-  const tcStr = tcNum > 0 ? "  - " + tcNum + "x Traffic Controller" + (tcNum > 1 ? "s" : "") : "";
-  const uteStr = uteNum > 0 ? "  - " + uteNum + "x Ute" + (uteNum > 1 ? "s" : "") : "";
+  const dateStr = buildDateRange(job);
   const lines = [];
   lines.push("Traffic Control Booking Request");
   lines.push("");
@@ -2953,10 +3382,31 @@ function buildTCEmail(job, contractor, tc) {
   lines.push("Location:    " + (job.location || "TBA"));
   if (job.jobRef) lines.push("Job Ref:     " + job.jobRef);
   lines.push("");
-  lines.push("Traffic Control Required:");
-  if (tcStr) lines.push(tcStr);
-  if (uteStr) lines.push(uteStr);
-  if (!tcStr && !uteStr) lines.push("  - TBA");
+
+  const days = tc.days || {};
+  const dateKeys = Object.keys(days).sort();
+  if (dateKeys.length > 1) {
+    lines.push("Traffic Control Required:");
+    dateKeys.forEach(function(dateKey) {
+      const d = days[dateKey];
+      if (!d) return;
+      const dayLabel = new Date(dateKey + "T12:00:00").toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" });
+      const tcNum  = parseInt(d.count) || 0;
+      const uteNum = parseInt(d.utes) || 0;
+      const parts  = [];
+      if (tcNum > 0)  parts.push(tcNum + "x TC" + (tcNum > 1 ? "s" : ""));
+      if (uteNum > 0) parts.push(uteNum + "x Ute" + (uteNum > 1 ? "s" : ""));
+      lines.push("  " + dayLabel + ":  " + (parts.length ? parts.join(", ") : "Not required"));
+    });
+  } else {
+    const tcNum  = parseInt(tc.count) || 0;
+    const uteNum = parseInt(tc.utes)  || 0;
+    lines.push("Traffic Control Required:");
+    if (tcNum  > 0) lines.push("  - " + tcNum  + "x Traffic Controller" + (tcNum  > 1 ? "s" : ""));
+    if (uteNum > 0) lines.push("  - " + uteNum + "x Ute" + (uteNum > 1 ? "s" : ""));
+    if (!tcNum && !uteNum) lines.push("  - TBA");
+  }
+
   if (tc.notes) {
     lines.push("");
     lines.push(tc.notes);
@@ -2967,30 +3417,54 @@ function buildTCEmail(job, contractor, tc) {
 }
 
 function buildAsphaltEmail(job, contractor, asphalt) {
-  const dur = dateDiffDays(job.startDate, job.endDate) + 1;
-  const dateStr = formatDisplayDate(job.startDate) + (dur > 1 ? " - " + formatDisplayDate(job.endDate) : "");
-  const mixes = asphalt.mixes || [];
-  const totalT = mixes.reduce((s, r) => s + (parseFloat(r.tonnes) || 0), 0);
-  const lines = [];
+  const dur     = dateDiffDays(job.startDate, job.endDate) + 1;
+  const dateStr = buildDateRange(job);
+  const lines   = [];
   lines.push("Asphalt Order");
   lines.push("");
   lines.push("Date:        " + dateStr + (job.shift ? " (" + job.shift + " Shift)" : ""));
   lines.push("Location:    " + (job.location || "TBA"));
   if (job.jobRef) lines.push("Job Ref:     " + job.jobRef);
   lines.push("");
-  lines.push("Mix Order:");
-  if (mixes.length > 0) {
+
+  // mixes is now grouped by date key { "2026-06-02": [...], "2026-06-03": [...] }
+  const mixesByDate = asphalt.mixes || {};
+  var grandTotal = 0;
+
+  if (typeof mixesByDate === "object" && !Array.isArray(mixesByDate)) {
+    // New grouped format
+    const dateKeys = Object.keys(mixesByDate).sort();
+    if (dateKeys.length > 0) {
+      dateKeys.forEach(function(dateKey) {
+        const dayRows = mixesByDate[dateKey];
+        if (!dayRows || dayRows.length === 0) return;
+        const dayLabel = new Date(dateKey + "T12:00:00").toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" });
+        const dayTotal = dayRows.reduce(function(s, r) { return s + (parseFloat(r.tonnes) || 0); }, 0);
+        grandTotal += dayTotal;
+        lines.push(dayLabel + (dayTotal > 0 ? "  (" + dayTotal + "T)" : "") + ":");
+        dayRows.forEach(function(r) {
+          const timePart = r.time ? "   Load-out: " + r.time : "";
+          lines.push("  - " + (r.mix || "TBA") + (r.tonnes ? "   " + r.tonnes + "T" : "") + timePart);
+        });
+        lines.push("");
+      });
+      if (grandTotal > 0) lines.push("Total Order:  " + grandTotal + "T");
+    } else {
+      lines.push("Mix Order:  TBA");
+    }
+  } else {
+    // Legacy flat array format
+    const mixes  = Array.isArray(mixesByDate) ? mixesByDate : [];
+    const totalT = mixes.reduce(function(s, r) { return s + (parseFloat(r.tonnes) || 0); }, 0);
+    grandTotal = totalT;
+    lines.push("Mix Order:");
     mixes.forEach(function(r) {
       const timePart = r.time ? "   Load-out: " + r.time : "";
       lines.push("  - " + (r.mix || "TBA") + (r.tonnes ? "   " + r.tonnes + "T" : "") + timePart);
     });
-    if (totalT > 0) {
-      lines.push("");
-      lines.push("  Total:  " + totalT + "T");
-    }
-  } else {
-    lines.push("  TBA");
+    if (totalT > 0) { lines.push(""); lines.push("  Total:  " + totalT + "T"); }
   }
+
   if (asphalt.contact || asphalt.phone) {
     lines.push("");
     lines.push("Site Contact:  " + [asphalt.contact, asphalt.phone].filter(Boolean).join("  |  "));
@@ -3204,10 +3678,8 @@ document.getElementById("contractor-save-btn").addEventListener("click", () => {
   closeContractorModal();
   populateContractorDropdowns();
   // Rebuild truck rows with updated contractor list
-  const truckRowsEl = document.getElementById("truck-rows");
-  truckRowsEl.innerHTML = "";
+  // truck-rows replaced by day sections
   truckRowCount = 0;
-  addTruckRow();
   // Rebuild asphalt mix dropdowns with updated plant mixes
   document.querySelectorAll(".amix-type").forEach(sel => {
     const cur = sel.value;
@@ -3218,6 +3690,48 @@ document.getElementById("contractor-save-btn").addEventListener("click", () => {
 
 document.getElementById("btn-manage-contractors").addEventListener("click", () => {
   openContractorModal();
+});
+
+// ─── SETTINGS MODAL ──────────────────────────────────────────────────────────
+function openSettingsModal() {
+  const s = loadSettings();
+  const emailEl = document.getElementById("settings-email");
+  const notifyNew  = document.getElementById("settings-notify-new");
+  const notifyEdit = document.getElementById("settings-notify-edit");
+  if (emailEl)     emailEl.value = s.email || "";
+  if (notifyNew)   notifyNew.checked  = s.notifyNew  !== false;
+  if (notifyEdit)  notifyEdit.checked = s.notifyEdit !== false;
+  document.getElementById("settings-overlay").classList.add("open");
+}
+
+function closeSettingsModal() {
+  document.getElementById("settings-overlay").classList.remove("open");
+}
+
+document.getElementById("btn-settings").addEventListener("click", openSettingsModal);
+document.getElementById("settings-close").addEventListener("click", closeSettingsModal);
+document.getElementById("settings-overlay").addEventListener("click", function(e) {
+  if (e.target === document.getElementById("settings-overlay")) closeSettingsModal();
+});
+
+document.getElementById("settings-manage-contractors-btn").addEventListener("click", function() {
+  closeSettingsModal();
+  openContractorModal();
+});
+
+document.getElementById("settings-cancel-btn").addEventListener("click", closeSettingsModal);
+
+document.getElementById("settings-save-btn").addEventListener("click", function() {
+  const s = loadSettings();
+  const emailEl = document.getElementById("settings-email");
+  const notifyNew  = document.getElementById("settings-notify-new");
+  const notifyEdit = document.getElementById("settings-notify-edit");
+  if (emailEl)    s.email      = emailEl.value.trim();
+  if (notifyNew)  s.notifyNew  = notifyNew.checked;
+  if (notifyEdit) s.notifyEdit = notifyEdit.checked;
+  saveSettings(s);
+  closeSettingsModal();
+  showToast("Settings saved ✓");
 });
 
 document.getElementById("btn-clear-order").addEventListener("click", () => {
@@ -3231,16 +3745,12 @@ document.getElementById("btn-clear-order").addEventListener("click", () => {
     document.getElementById("toggle-" + s).classList.remove("on");
     document.getElementById(s + "-body").classList.remove("open");
   });
-  document.getElementById("truck-rows").innerHTML = "";
+  // truck-rows replaced by day sections
   truckRowCount = 0;
-  addTruckRow();
-  document.getElementById("profiler-1m").checked = false;
-  document.getElementById("profiler-2m").checked = false;
-  document.getElementById("chip-1m").classList.remove("selected");
-  document.getElementById("chip-2m").classList.remove("selected");
+  // profiler-1m/2m replaced by day sections
+  // chip-1m/2m replaced by day sections
   document.getElementById("profiler-notes").value = "";
-  document.getElementById("tc-count").value = "";
-  document.getElementById("tc-utes").value  = "";
+  // tc-count/utes replaced by day sections
   document.getElementById("tc-notes").value = "";
   document.getElementById("order-confirmed-badge").style.display = "none";
   document.getElementById("btn-clear-order").style.display = "none";
